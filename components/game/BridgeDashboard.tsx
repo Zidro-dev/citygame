@@ -9,6 +9,7 @@ import {
   type BridgeItem,
 } from "@/server-actions/bridge";
 import { MAX_BRIDGES, BRIDGE_BONUS_PERCENT } from "@/lib/game-constants";
+import { useLanguage } from "@/lib/LanguageContext";
 import {
   X,
   Network,
@@ -34,6 +35,7 @@ export function BridgeDashboard({
   onClose,
   onBridgeCountChanged,
 }: BridgeDashboardProps) {
+  const { t, language } = useLanguage();
   const [targetUsername, setTargetUsername] = useState<string>("");
   const [activeBridges, setActiveBridges] = useState<BridgeItem[]>([]);
   const [incomingRequests, setIncomingRequests] = useState<BridgeItem[]>([]);
@@ -88,14 +90,26 @@ export function BridgeDashboard({
     try {
       const res = await sendBridgeRequestAction(targetUsername.trim());
       if (res.success) {
-        setMessage({ text: `Bridge invitation dispatched to ${targetUsername}!`, isError: false });
+        setMessage({
+          text:
+            language === "uz"
+              ? `${targetUsername} ga ko'prik taklifi yuborildi!`
+              : `Bridge invitation dispatched to ${targetUsername}!`,
+          isError: false,
+        });
         setTargetUsername("");
         await reloadBridges();
       } else {
         setMessage({ text: res.error || "Failed to dispatch request", isError: true });
       }
     } catch {
-      setMessage({ text: "Network error sending bridge proposal", isError: true });
+      setMessage({
+        text:
+          language === "uz"
+            ? "Taklif yuborishda tarmoq xatoligi"
+            : "Network error sending bridge proposal",
+        isError: true,
+      });
     } finally {
       setIsSubmitting(false);
     }
@@ -141,10 +155,10 @@ export function BridgeDashboard({
             </div>
             <div>
               <h3 className="text-base font-bold text-white tracking-tight">
-                Intercity Tourism Bridge Network
+                {t("allianceTitle")}
               </h3>
               <p className="text-xs text-slate-400">
-                Connect borders with up to 9 player cities for compounding tourism multipliers
+                {t("allianceSubtitle")}
               </p>
             </div>
           </div>
@@ -163,19 +177,23 @@ export function BridgeDashboard({
             <div>
               <div className="text-[10px] font-semibold text-purple-300 uppercase tracking-wider flex items-center gap-1.5">
                 <Sparkles className="w-3.5 h-3.5 text-purple-400" />
-                <span>Active Alliance Bonus</span>
+                <span>{t("currentBonus", { percent: totalBonusPercent })}</span>
               </div>
               <div className="text-2xl font-black text-white font-mono mt-0.5">
                 +{totalBonusPercent}%{" "}
-                <span className="text-xs font-normal text-slate-300">Global Revenue Boost</span>
+                <span className="text-xs font-normal text-slate-300">
+                  {language === "uz" ? "Global Daromad Bonusi" : "Global Revenue Boost"}
+                </span>
               </div>
               <div className="text-xs text-slate-400 mt-0.5">
-                Each active bridge provides +5% tourism multiplier to all commercial zones.
+                {language === "uz"
+                  ? "Har bir faol ko'prik barcha tijorat korxonalariga +5% turizm daromadi beradi."
+                  : "Each active bridge provides +5% tourism multiplier to all commercial zones."}
               </div>
             </div>
 
             <div className="text-right">
-              <div className="text-xs text-slate-400">Bridge Capacity</div>
+              <div className="text-xs text-slate-400">{t("activeBridgesCount", { count: activeBridges.length })}</div>
               <div className="text-xl font-bold font-mono text-purple-300">
                 {activeBridges.length} / {MAX_BRIDGES}
               </div>
@@ -209,7 +227,7 @@ export function BridgeDashboard({
             type="text"
             value={targetUsername}
             onChange={(e) => setTargetUsername(e.target.value)}
-            placeholder="Enter neighboring mayor username..."
+            placeholder={t("enterMayorUsername")}
             disabled={activeBridges.length >= MAX_BRIDGES || isSubmitting}
             className="glass-input flex-1 px-4 py-2.5 rounded-xl text-xs placeholder:text-slate-500 disabled:opacity-50"
           />
@@ -225,7 +243,7 @@ export function BridgeDashboard({
             ) : (
               <Send className="w-3.5 h-3.5" />
             )}
-            <span>Propose Bridge</span>
+            <span>{isSubmitting ? t("sending") : t("sendRequest")}</span>
           </button>
         </form>
 
@@ -234,7 +252,7 @@ export function BridgeDashboard({
           {isLoading ? (
             <div className="py-12 flex flex-col items-center justify-center text-slate-400 gap-2">
               <Loader2 className="w-6 h-6 animate-spin text-purple-400" />
-              <span className="text-xs">Scanning territory network...</span>
+              <span className="text-xs">{t("loading")}</span>
             </div>
           ) : (
             <>
@@ -243,7 +261,7 @@ export function BridgeDashboard({
                 <div className="space-y-2">
                   <div className="text-xs font-semibold text-amber-300 uppercase tracking-wider flex items-center gap-1.5">
                     <Clock className="w-3.5 h-3.5" />
-                    <span>Incoming Bridge Proposals ({incomingRequests.length})</span>
+                    <span>{t("tabIncoming")} ({incomingRequests.length})</span>
                   </div>
                   <div className="space-y-2">
                     {incomingRequests.map((req) => (
@@ -257,10 +275,12 @@ export function BridgeDashboard({
                           </div>
                           <div>
                             <div className="text-xs font-bold text-white">
-                              Mayor {req.partnerUsername}
+                              {req.partnerUsername}
                             </div>
                             <div className="text-[10px] text-slate-400">
-                              Proposes a cross-border tourism bridge
+                              {language === "uz"
+                                ? "Chegaralararo turizm ko'prigini taklif qilmoqda"
+                                : "Proposes a cross-border tourism bridge"}
                             </div>
                           </div>
                         </div>
@@ -272,7 +292,7 @@ export function BridgeDashboard({
                             className="px-3 py-1.5 rounded-lg bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 border border-emerald-500/30 text-xs font-medium flex items-center gap-1 cursor-pointer transition"
                           >
                             <Check className="w-3.5 h-3.5" />
-                            <span>Accept</span>
+                            <span>{t("accept")}</span>
                           </button>
                           <button
                             onClick={() => handleReject(req.id)}
@@ -292,13 +312,12 @@ export function BridgeDashboard({
               <div className="space-y-2">
                 <div className="text-xs font-semibold text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
                   <ShieldCheck className="w-3.5 h-3.5 text-purple-400" />
-                  <span>Active Tourism Alliances ({activeBridges.length})</span>
+                  <span>{t("tabActive")} ({activeBridges.length})</span>
                 </div>
 
                 {activeBridges.length === 0 ? (
                   <div className="p-6 rounded-2xl glass-card text-center text-xs text-slate-400">
-                    No active bridges yet. Send proposals to neighboring mayors above to unlock the
-                    +5% tourism boost per bridge!
+                    {t("noActiveBridges")}
                   </div>
                 ) : (
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
@@ -313,10 +332,10 @@ export function BridgeDashboard({
                           </div>
                           <div className="truncate">
                             <div className="text-xs font-bold text-white truncate">
-                              Mayor {bridge.partnerUsername}
+                              {bridge.partnerUsername}
                             </div>
                             <div className="text-[10px] text-emerald-400 font-mono font-semibold">
-                              +5% Tourism Boost
+                              +5% {t("revenue")}
                             </div>
                           </div>
                         </div>
@@ -324,7 +343,7 @@ export function BridgeDashboard({
                         <button
                           onClick={() => handleReject(bridge.id)}
                           disabled={isSubmitting}
-                          title="Sever Bridge Alliance"
+                          title={t("breakBridge")}
                           className="p-1.5 rounded-lg hover:bg-rose-500/20 text-slate-500 hover:text-rose-400 transition cursor-pointer shrink-0"
                         >
                           <Trash2 className="w-3.5 h-3.5" />
@@ -339,7 +358,7 @@ export function BridgeDashboard({
               {outgoingRequests.length > 0 && (
                 <div className="space-y-2 pt-2">
                   <div className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
-                    Dispatched Proposals Awaiting Response ({outgoingRequests.length})
+                    {t("tabOutgoing")} ({outgoingRequests.length})
                   </div>
                   <div className="space-y-2">
                     {outgoingRequests.map((req) => (
@@ -348,13 +367,21 @@ export function BridgeDashboard({
                         className="glass-card p-2.5 rounded-xl border-white/5 flex items-center justify-between text-xs"
                       >
                         <span className="text-slate-300">
-                          Proposal sent to <strong>Mayor {req.partnerUsername}</strong>
+                          {language === "uz" ? (
+                            <>
+                              <strong>{req.partnerUsername}</strong> ga taklif yuborilgan
+                            </>
+                          ) : (
+                            <>
+                              Proposal sent to <strong>Mayor {req.partnerUsername}</strong>
+                            </>
+                          )}
                         </span>
                         <button
                           onClick={() => handleReject(req.id)}
                           className="text-[11px] text-slate-400 hover:text-rose-400 transition cursor-pointer"
                         >
-                          Cancel
+                          {t("cancel")}
                         </button>
                       </div>
                     ))}

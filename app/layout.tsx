@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import { LanguageProvider } from "@/lib/LanguageContext";
 
 export const metadata: Metadata = {
   title: "Idle City Builder | Multiplayer Metropolis Strategy",
@@ -12,9 +13,9 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className="h-full dark">
+    <html lang="uz" className="h-full dark">
       <body className="min-h-full flex flex-col font-sans antialiased text-slate-100 bg-[#090d16]">
-        {children}
+        <LanguageProvider>{children}</LanguageProvider>
       </body>
     </html>
   );

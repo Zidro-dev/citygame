@@ -4,6 +4,8 @@ import { useState } from "react";
 import Link from "next/link";
 import { formatCurrency, formatNumber } from "@/lib/utils";
 import type { LeaderboardEntry } from "@/server-actions/leaderboard";
+import { useLanguage } from "@/lib/LanguageContext";
+import { LanguageSwitcher } from "@/components/ui/LanguageSwitcher";
 import {
   Trophy,
   ArrowLeft,
@@ -23,6 +25,7 @@ export function LeaderboardClient({
   topMegapolises,
   currentUsername,
 }: LeaderboardClientProps) {
+  const { t } = useLanguage();
   const [activeTab, setActiveTab] = useState<"EARNERS" | "MEGAPOLISES">("EARNERS");
 
   const list = activeTab === "EARNERS" ? topEarners : topMegapolises;
@@ -64,10 +67,15 @@ export function LeaderboardClient({
           className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl glass-card text-xs font-semibold text-slate-300 hover:text-white hover:border-cyan-500/30 transition cursor-pointer"
         >
           <ArrowLeft className="w-4 h-4 text-cyan-400" />
-          <span>Return to City Console</span>
+          <span>{t("returnToCity")}</span>
         </Link>
 
-        <div className="text-xs text-slate-400 font-mono">Global Leaderboards</div>
+        <div className="flex items-center gap-3">
+          <LanguageSwitcher />
+          <div className="text-xs text-slate-400 font-mono hidden sm:block">
+            {t("globalLeaderboards")}
+          </div>
+        </div>
       </div>
 
       {/* Main Glass Panel */}
@@ -81,10 +89,10 @@ export function LeaderboardClient({
             <Trophy className="w-8 h-8" />
           </div>
           <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight">
-            Metropolis Global Hall of Fame
+            {t("hallOfFame")}
           </h1>
           <p className="text-xs sm:text-sm text-slate-400 max-w-lg mx-auto">
-            Real-time rankings of the wealthiest economic titans and most populous urban civilizations
+            {t("hallSubtitle")}
           </p>
         </div>
 
@@ -99,7 +107,7 @@ export function LeaderboardClient({
             }`}
           >
             <TrendingUp className="w-4 h-4" />
-            <span>Top Earners ($/sec)</span>
+            <span>{t("tabTopEarners")}</span>
           </button>
 
           <button
@@ -111,7 +119,7 @@ export function LeaderboardClient({
             }`}
           >
             <Users className="w-4 h-4" />
-            <span>Megapolises (Population)</span>
+            <span>{t("tabMegapolises")}</span>
           </button>
         </div>
 
@@ -119,22 +127,26 @@ export function LeaderboardClient({
         <div className="overflow-x-auto relative z-10 pt-2">
           {list.length === 0 ? (
             <div className="py-12 text-center text-xs text-slate-400 glass-card rounded-2xl">
-              No cities registered yet. Be the first to establish a metropolis!
+              Hozircha shaharlar ro&apos;yxati bo&apos;sh.
             </div>
           ) : (
             <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="border-b border-white/10 text-[10px] sm:text-xs font-semibold text-slate-400 uppercase tracking-wider">
-                  <th className="py-3 px-3">Rank</th>
-                  <th className="py-3 px-3">Mayor</th>
+                  <th className="py-3 px-3">{t("colRank")}</th>
+                  <th className="py-3 px-3">{t("colMayor")}</th>
                   <th className="py-3 px-3 text-right">
-                    {activeTab === "EARNERS" ? "Revenue Rate" : "Citizens"}
+                    {activeTab === "EARNERS" ? t("colIncome") : t("colPopulation")}
                   </th>
                   <th className="py-3 px-3 text-right hidden sm:table-cell">
-                    {activeTab === "EARNERS" ? "Citizens" : "Revenue Rate"}
+                    {activeTab === "EARNERS" ? t("colPopulation") : t("colIncome")}
                   </th>
-                  <th className="py-3 px-3 text-right hidden md:table-cell">Structures</th>
-                  <th className="py-3 px-3 text-right hidden md:table-cell">Bridges</th>
+                  <th className="py-3 px-3 text-right hidden md:table-cell">
+                    {t("landPlot")}
+                  </th>
+                  <th className="py-3 px-3 text-right hidden md:table-cell">
+                    {t("colBridges")}
+                  </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-white/5 text-xs sm:text-sm">
@@ -158,7 +170,7 @@ export function LeaderboardClient({
                           <span className="font-semibold text-white">{entry.username}</span>
                           {isCurrentUser && (
                             <span className="text-[9px] font-mono px-1.5 py-0.5 rounded bg-cyan-500/20 text-cyan-300 border border-cyan-500/30">
-                              YOU
+                              {t("you")}
                             </span>
                           )}
                         </div>
@@ -166,7 +178,7 @@ export function LeaderboardClient({
                       <td className="py-3 px-3 text-right font-mono font-bold">
                         {activeTab === "EARNERS" ? (
                           <span className="text-emerald-400">
-                            +{formatCurrency(entry.incomePerSec)}/s
+                            +{formatCurrency(entry.incomePerSec)}{t("perSec")}
                           </span>
                         ) : (
                           <span className="text-blue-300">
@@ -176,10 +188,10 @@ export function LeaderboardClient({
                       </td>
                       <td className="py-3 px-3 text-right font-mono text-slate-400 hidden sm:table-cell">
                         {activeTab === "EARNERS" ? (
-                          <span>{formatNumber(entry.population)} Citizens</span>
+                          <span>{formatNumber(entry.population)} {t("citizens")}</span>
                         ) : (
                           <span className="text-emerald-400/80">
-                            +{formatCurrency(entry.incomePerSec)}/s
+                            +{formatCurrency(entry.incomePerSec)}{t("perSec")}
                           </span>
                         )}
                       </td>

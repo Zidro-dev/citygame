@@ -10,6 +10,7 @@ import { OfflineModal } from "@/components/game/OfflineModal";
 import { BridgeDashboard } from "@/components/game/BridgeDashboard";
 import type { BuildingState } from "@/lib/game-engine";
 import { AlertCircle, AlertTriangle, Network, ShieldCheck } from "lucide-react";
+import { useLanguage } from "@/lib/LanguageContext";
 
 interface GameBoardProps {
   username: string;
@@ -31,6 +32,8 @@ export function GameBoard({ username, initialData }: GameBoardProps) {
     upgradeBuilding,
     syncWithServer,
   } = useCityEngine(initialData);
+
+  const { t } = useLanguage();
 
   // Modals state
   const [selectedEmptyTile, setSelectedEmptyTile] = useState<{ x: number; y: number } | null>(
@@ -98,15 +101,15 @@ export function GameBoard({ username, initialData }: GameBoardProps) {
             <div>
               <div className="font-bold">
                 {isDeficit
-                  ? `Labor Deficit Detected (${Math.round(economy.efficiency * 100)}% Efficiency)`
-                  : "Workforce Fully Staffed (100% Efficiency)"}
+                  ? t("laborDeficitTitle", { eff: Math.round(economy.efficiency * 100) })
+                  : t("laborFullTitle")}
               </div>
               <p className="text-[11px] text-slate-400 mt-0.5">
                 {isDeficit
-                  ? `Your commercial centers need ${
-                      economy.totalRequiredPopulation - economy.totalPopulation
-                    } more citizens to generate maximum revenue.`
-                  : "All commercial zones are operating at peak economic output."}
+                  ? t("laborDeficitDesc", {
+                      needed: economy.totalRequiredPopulation - economy.totalPopulation,
+                    })
+                  : t("laborFullDesc")}
               </p>
             </div>
           </div>
@@ -119,12 +122,14 @@ export function GameBoard({ username, initialData }: GameBoardProps) {
               </div>
               <div>
                 <div className="font-bold text-white">
-                  Tourism Bridge Multiplier: +{Math.round((economy.bridgeMultiplier - 1) * 100)}%
+                  {t("bridgeMultiplierTitle", {
+                    percent: Math.round((economy.bridgeMultiplier - 1) * 100),
+                  })}
                 </div>
                 <p className="text-[11px] text-slate-400 mt-0.5">
                   {bridgesCount < 9
-                    ? `Connect up to ${9 - bridgesCount} more player cities for +5% bonus each.`
-                    : "Maximum 9 bridges connected! +45% peak tourism bonus active."}
+                    ? t("bridgeMultiplierDesc", { remaining: 9 - bridgesCount })
+                    : t("bridgeMultiplierMax")}
                 </p>
               </div>
             </div>
@@ -133,7 +138,7 @@ export function GameBoard({ username, initialData }: GameBoardProps) {
               onClick={() => setIsBridgeModalOpen(true)}
               className="px-3 py-1.5 rounded-xl bg-purple-500/20 hover:bg-purple-500/30 text-purple-300 border border-purple-500/30 text-xs font-semibold cursor-pointer transition shrink-0"
             >
-              Manage
+              {t("manage")}
             </button>
           </div>
         </div>

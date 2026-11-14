@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { BUILDING_CATALOG } from "@/lib/game-constants";
 import { formatCurrency } from "@/lib/utils";
+import { useLanguage } from "@/lib/LanguageContext";
 import {
   X,
   Hammer,
@@ -32,6 +33,7 @@ export function BuildModal({
   onClose,
   onBuild,
 }: BuildModalProps) {
+  const { t, getBuildingInfo } = useLanguage();
   const [filter, setFilter] = useState<"ALL" | "RESIDENTIAL" | "COMMERCIAL">("ALL");
   const [selectedType, setSelectedType] = useState<string | null>("RESIDENTIAL_SMALL");
 
@@ -68,6 +70,7 @@ export function BuildModal({
   };
 
   const selectedBuildingDef = selectedType ? BUILDING_CATALOG[selectedType] : null;
+  const selectedInfo = selectedType ? getBuildingInfo(selectedType) : null;
   const canAfford = selectedBuildingDef ? balance >= selectedBuildingDef.baseCost : false;
 
   return (
@@ -84,10 +87,10 @@ export function BuildModal({
             </div>
             <div>
               <h3 className="text-base font-bold text-white tracking-tight">
-                Metropolis Construction Terminal
+                {t("modalTitle")}
               </h3>
               <p className="text-xs text-slate-400 font-mono">
-                Target Plot: ({tileCoordinates.x}, {tileCoordinates.y}) • Available:{" "}
+                {t("modalSubtitle", { x: tileCoordinates.x, y: tileCoordinates.y })} • {t("treasury")}:{" "}
                 <span className="text-amber-300 font-semibold">{formatCurrency(balance)}</span>
               </p>
             </div>
@@ -113,7 +116,11 @@ export function BuildModal({
                   : "bg-white/5 text-slate-400 hover:text-white border border-transparent"
               }`}
             >
-              {tab === "ALL" ? "All Blueprints" : tab.charAt(0) + tab.slice(1).toLowerCase()}
+              {tab === "ALL"
+                ? t("tabAll")
+                : tab === "RESIDENTIAL"
+                ? t("tabResidential")
+                : t("tabCommercial")}
             </button>
           ))}
         </div>
@@ -123,6 +130,7 @@ export function BuildModal({
           {buildingsList.map((item) => {
             const isSelected = selectedType === item.type;
             const affordable = balance >= item.baseCost;
+            const itemInfo = getBuildingInfo(item.type);
 
             return (
               <div
@@ -140,7 +148,7 @@ export function BuildModal({
                   </div>
                   <div>
                     <div className="flex items-center gap-2">
-                      <span className="font-bold text-white text-sm">{item.name}</span>
+                      <span className="font-bold text-white text-sm">{itemInfo.name}</span>
                       <span
                         className={`text-[9px] font-mono px-2 py-0.5 rounded-full uppercase ${
                           item.category === "RESIDENTIAL"
@@ -148,27 +156,27 @@ export function BuildModal({
                             : "bg-emerald-500/15 text-emerald-300 border border-emerald-500/30"
                         }`}
                       >
-                        {item.category}
+                        {item.category === "RESIDENTIAL" ? t("tabResidential") : t("tabCommercial")}
                       </span>
                     </div>
-                    <p className="text-xs text-slate-400 mt-0.5">{item.description}</p>
+                    <p className="text-xs text-slate-400 mt-0.5">{itemInfo.description}</p>
 
                     {/* Stats badges */}
                     <div className="flex items-center gap-3 mt-1.5 text-xs">
                       {item.category === "RESIDENTIAL" ? (
                         <div className="flex items-center gap-1 text-blue-300 font-mono">
                           <Users className="w-3.5 h-3.5 text-blue-400" />
-                          <span>+{item.basePopulation} Citizens</span>
+                          <span>+{item.basePopulation} {t("citizens")}</span>
                         </div>
                       ) : (
                         <>
                           <div className="flex items-center gap-1 text-emerald-300 font-mono">
                             <TrendingUp className="w-3.5 h-3.5 text-emerald-400" />
-                            <span>+${item.baseIncome}/s</span>
+                            <span>+${item.baseIncome}{t("perSec")}</span>
                           </div>
                           <div className="flex items-center gap-1 text-slate-400 font-mono">
                             <Users className="w-3.5 h-3.5 text-slate-400" />
-                            <span>Req: {item.requiredPopulation} Pop</span>
+                            <span>{t("req")}: {item.requiredPopulation}</span>
                           </div>
                         </>
                       )}
@@ -185,7 +193,7 @@ export function BuildModal({
                   >
                     {formatCurrency(item.baseCost)}
                   </div>
-                  <div className="text-[10px] text-slate-400">Construction Cost</div>
+                  <div className="text-[10px] text-slate-400">{t("cost")}</div>
                 </div>
               </div>
             );
@@ -195,9 +203,9 @@ export function BuildModal({
         {/* Modal Footer */}
         <div className="pt-4 border-t border-white/10 flex items-center justify-between relative z-10">
           <div className="text-xs text-slate-400">
-            {selectedBuildingDef && (
+            {selectedInfo && (
               <span>
-                Selected: <strong className="text-white">{selectedBuildingDef.name}</strong>
+                <strong className="text-white">{selectedInfo.name}</strong>
               </span>
             )}
           </div>
@@ -207,7 +215,7 @@ export function BuildModal({
               onClick={onClose}
               className="px-4 py-2 rounded-xl text-xs font-medium text-slate-300 hover:text-white glass-card cursor-pointer"
             >
-              Cancel
+              {t("cancel")}
             </button>
             <button
               onClick={handleConstruct}
@@ -217,12 +225,14 @@ export function BuildModal({
               {isActionPending ? (
                 <>
                   <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                  <span>Constructing...</span>
+                  <span>{t("buildingProgress")}</span>
                 </>
+              ) : !canAfford ? (
+                <span>{t("insufficientFunds")}</span>
               ) : (
                 <>
                   <CheckCircle className="w-3.5 h-3.5" />
-                  <span>Construct Structure</span>
+                  <span>{t("constructButton", { cost: formatCurrency(selectedBuildingDef?.baseCost || 0) })}</span>
                 </>
               )}
             </button>

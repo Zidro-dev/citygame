@@ -15,9 +15,12 @@ import {
   Users,
   Grid,
 } from "lucide-react";
+import { useLanguage } from "@/lib/LanguageContext";
+import { LanguageSwitcher } from "@/components/ui/LanguageSwitcher";
 
 export function RegisterForm() {
   const router = useRouter();
+  const { t } = useLanguage();
   const [state, formAction, isPending] = useActionState<AuthActionResult | null, FormData>(
     registerAction,
     null
@@ -32,6 +35,11 @@ export function RegisterForm() {
 
   return (
     <div className="w-full max-w-md mx-auto">
+      {/* Language Switcher Bar */}
+      <div className="flex justify-end mb-3">
+        <LanguageSwitcher />
+      </div>
+
       <div className="glass-panel p-8 rounded-2xl relative overflow-hidden">
         {/* Ambient Top Glow */}
         <div className="absolute -top-24 left-1/2 -translate-x-1/2 w-48 h-48 bg-emerald-500/20 rounded-full blur-3xl pointer-events-none" />
@@ -42,10 +50,10 @@ export function RegisterForm() {
             <Sparkles className="w-8 h-8" />
           </div>
           <h1 className="text-2xl font-bold text-white tracking-tight">
-            Found City Charter
+            {t("registerTitle")}
           </h1>
           <p className="text-sm text-slate-400 mt-1">
-            Claim your 5x5 territory and initiate economic development
+            {t("registerSubtitle")}
           </p>
         </div>
 
@@ -53,23 +61,23 @@ export function RegisterForm() {
         <div className="mb-6 p-3.5 rounded-xl bg-slate-900/60 border border-white/10 space-y-2">
           <div className="text-xs font-semibold text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
             <Sparkles className="w-3.5 h-3.5 text-emerald-400" />
-            <span>Charter Inclusions</span>
+            <span>{t("charterInclusions")}</span>
           </div>
           <div className="grid grid-cols-3 gap-2 text-center text-xs">
             <div className="p-2 rounded-lg bg-white/5 border border-white/5">
               <Coins className="w-3.5 h-3.5 text-amber-400 mx-auto mb-1" />
               <div className="font-semibold text-white">$500</div>
-              <div className="text-[10px] text-slate-400">Capital</div>
+              <div className="text-[10px] text-slate-400">{t("capital")}</div>
             </div>
             <div className="p-2 rounded-lg bg-white/5 border border-white/5">
               <Users className="w-3.5 h-3.5 text-blue-400 mx-auto mb-1" />
               <div className="font-semibold text-white">10</div>
-              <div className="text-[10px] text-slate-400">Citizens</div>
+              <div className="text-[10px] text-slate-400">{t("citizens")}</div>
             </div>
             <div className="p-2 rounded-lg bg-white/5 border border-white/5">
               <Grid className="w-3.5 h-3.5 text-purple-400 mx-auto mb-1" />
               <div className="font-semibold text-white">5x5</div>
-              <div className="text-[10px] text-slate-400">Land Plot</div>
+              <div className="text-[10px] text-slate-400">{t("landPlot")}</div>
             </div>
           </div>
         </div>
@@ -86,7 +94,7 @@ export function RegisterForm() {
         <form action={formAction} className="space-y-4">
           <div>
             <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2">
-              Mayor Username
+              {t("mayorUsername")}
             </label>
             <div className="relative">
               <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
@@ -97,7 +105,7 @@ export function RegisterForm() {
                 minLength={3}
                 maxLength={20}
                 autoComplete="username"
-                placeholder="Choose mayor name (e.g. CyberVanguard)"
+                placeholder={t("mayorPlaceholder")}
                 className="glass-input w-full pl-10 pr-4 py-2.5 rounded-xl text-sm placeholder:text-slate-500"
               />
             </div>
@@ -105,7 +113,7 @@ export function RegisterForm() {
 
           <div>
             <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2">
-              Passcode (min 6 characters)
+              {t("passcode")} (min 6)
             </label>
             <div className="relative">
               <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
@@ -129,11 +137,11 @@ export function RegisterForm() {
             {isPending ? (
               <>
                 <Loader2 className="w-4 h-4 animate-spin" />
-                <span>Founding City & Constructing Hubs...</span>
+                <span>{t("founding")}</span>
               </>
             ) : (
               <>
-                <span>Establish Metropolis</span>
+                <span>{t("foundCity")}</span>
                 <ArrowRight className="w-4 h-4" />
               </>
             )}
@@ -142,12 +150,11 @@ export function RegisterForm() {
 
         {/* Footer Switch */}
         <div className="mt-8 pt-6 border-t border-white/5 text-center text-xs text-slate-400">
-          Already registered as Mayor?{" "}
           <Link
             href="/login"
             className="text-emerald-400 hover:text-emerald-300 font-medium underline underline-offset-4"
           >
-            Return to City Console
+            {t("hasAccount")}
           </Link>
         </div>
       </div>

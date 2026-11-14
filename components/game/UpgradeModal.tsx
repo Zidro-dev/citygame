@@ -3,6 +3,7 @@
 import { BUILDING_CATALOG, getUpgradeCost } from "@/lib/game-constants";
 import type { BuildingState } from "@/lib/game-engine";
 import { formatCurrency } from "@/lib/utils";
+import { useLanguage } from "@/lib/LanguageContext";
 import {
   X,
   ArrowUpCircle,
@@ -30,11 +31,14 @@ export function UpgradeModal({
   onClose,
   onUpgrade,
 }: UpgradeModalProps) {
+  const { t, getBuildingInfo, language } = useLanguage();
+
   if (!building) return null;
 
   const def = BUILDING_CATALOG[building.type];
   if (!def) return null;
 
+  const info = getBuildingInfo(building.type);
   const upgradeCost = getUpgradeCost(def.baseCost, building.level);
   const canAfford = balance >= upgradeCost;
   const isCommercial = def.category === "COMMERCIAL";
@@ -85,13 +89,13 @@ export function UpgradeModal({
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h3 className="text-base font-bold text-white tracking-tight">{def.name}</h3>
+                <h3 className="text-base font-bold text-white tracking-tight">{info.name}</h3>
                 <span className="text-xs font-mono font-bold px-2 py-0.5 rounded-full bg-cyan-500/15 border border-cyan-500/30 text-cyan-300">
-                  Level {building.level}
+                  {t("level")} {building.level}
                 </span>
               </div>
               <p className="text-xs text-slate-400 font-mono">
-                Grid Plot: ({building.grid_x}, {building.grid_y}) • {def.category}
+                ({building.grid_x}, {building.grid_y}) • {def.category === "RESIDENTIAL" ? t("tabResidential") : t("tabCommercial")}
               </p>
             </div>
           </div>
@@ -108,17 +112,17 @@ export function UpgradeModal({
         <div className="py-5 space-y-3 relative z-10">
           <div className="text-xs font-semibold text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
             <Sparkles className="w-3.5 h-3.5 text-purple-400" />
-            <span>Blueprint Modernization</span>
+            <span>{t("upgradeTitle")}</span>
           </div>
 
           <div className="glass-card p-4 rounded-2xl border-white/5 space-y-3">
             {/* Level progression */}
             <div className="flex items-center justify-between text-xs">
-              <span className="text-slate-400">Structure Tier:</span>
+              <span className="text-slate-400">{t("level")}:</span>
               <span className="font-mono font-bold text-white flex items-center gap-2">
-                <span>Tier {building.level}</span>
+                <span>{building.level}</span>
                 <span className="text-purple-400">→</span>
-                <span className="text-cyan-300">Tier {building.level + 1}</span>
+                <span className="text-cyan-300">{building.level + 1}</span>
               </span>
             </div>
 
@@ -126,29 +130,29 @@ export function UpgradeModal({
             {isCommercial ? (
               <>
                 <div className="flex items-center justify-between text-xs">
-                  <span className="text-slate-400">Base Revenue:</span>
+                  <span className="text-slate-400">{t("incomeBoost")}:</span>
                   <span className="font-mono font-bold text-emerald-400 flex items-center gap-2">
-                    <span>+${currentIncome.toFixed(1)}/s</span>
+                    <span>+${currentIncome.toFixed(1)}{t("perSec")}</span>
                     <span className="text-purple-400">→</span>
-                    <span>+${nextIncome.toFixed(1)}/s</span>
+                    <span>+${nextIncome.toFixed(1)}{t("perSec")}</span>
                   </span>
                 </div>
                 <div className="flex items-center justify-between text-xs">
-                  <span className="text-slate-400">Required Labor:</span>
+                  <span className="text-slate-400">{t("workersReq")}:</span>
                   <span className="font-mono text-slate-300 flex items-center gap-2">
-                    <span>{currentReqPop} workers</span>
+                    <span>{currentReqPop}</span>
                     <span className="text-purple-400">→</span>
-                    <span className="text-amber-300">{nextReqPop} workers</span>
+                    <span className="text-amber-300">{nextReqPop}</span>
                   </span>
                 </div>
               </>
             ) : (
               <div className="flex items-center justify-between text-xs">
-                <span className="text-slate-400">Citizen Capacity:</span>
+                <span className="text-slate-400">{t("residentsBoost")}:</span>
                 <span className="font-mono font-bold text-blue-300 flex items-center gap-2">
-                  <span>+{currentPop} Citizens</span>
+                  <span>+{currentPop} {t("citizens")}</span>
                   <span className="text-purple-400">→</span>
-                  <span>+{nextPop} Citizens</span>
+                  <span>+{nextPop} {t("citizens")}</span>
                 </span>
               </div>
             )}
@@ -159,7 +163,7 @@ export function UpgradeModal({
         <div className="pt-4 border-t border-white/10 flex items-center justify-between relative z-10">
           <div>
             <div className="text-[10px] uppercase text-slate-400 tracking-wider">
-              Upgrade Cost
+              {t("cost")}
             </div>
             <div
               className={`text-base font-bold font-mono ${
@@ -175,7 +179,7 @@ export function UpgradeModal({
               onClick={onClose}
               className="px-3.5 py-2 rounded-xl text-xs font-medium text-slate-300 hover:text-white glass-card cursor-pointer"
             >
-              Cancel
+              {t("cancel")}
             </button>
             <button
               onClick={handleUpgrade}
@@ -185,12 +189,14 @@ export function UpgradeModal({
               {isActionPending ? (
                 <>
                   <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                  <span>Modernizing...</span>
+                  <span>{t("upgrading")}</span>
                 </>
+              ) : !canAfford ? (
+                <span>{t("insufficientFunds")}</span>
               ) : (
                 <>
                   <ArrowUpCircle className="w-4 h-4" />
-                  <span>Upgrade Structure</span>
+                  <span>{t("upgradeButton", { cost: formatCurrency(upgradeCost) })}</span>
                 </>
               )}
             </button>

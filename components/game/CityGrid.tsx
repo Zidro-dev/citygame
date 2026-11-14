@@ -2,6 +2,7 @@
 
 import { GRID_SIZE, BUILDING_CATALOG } from "@/lib/game-constants";
 import type { BuildingState } from "@/lib/game-engine";
+import { useLanguage } from "@/lib/LanguageContext";
 import {
   Plus,
   Home,
@@ -24,6 +25,8 @@ export function CityGrid({
   onSelectEmptyTile,
   onSelectBuilding,
 }: CityGridProps) {
+  const { t, getBuildingInfo, language } = useLanguage();
+
   // Map buildings by coordinates "x,y" for O(1) tile lookup
   const buildingMap = new Map<string, BuildingState>();
   for (const b of buildings) {
@@ -55,15 +58,15 @@ export function CityGrid({
         <div className="flex items-center gap-2">
           <div className="w-2.5 h-2.5 rounded-full bg-cyan-400 animate-pulse shadow-[0_0_8px_rgba(6,182,212,0.8)]" />
           <h2 className="text-sm font-bold text-white uppercase tracking-wider">
-            Territory Grid Matrix (5x5)
+            {t("territoryMatrix")}
           </h2>
           <span className="text-xs text-slate-400 font-mono">
-            {buildings.length}/25 Plots Occupied
+            {t("plotsOccupied", { count: buildings.length })}
           </span>
         </div>
 
         <div className="text-xs text-slate-400 font-mono hidden sm:block">
-          Click any plot to build or upgrade
+          {t("gridHint")}
         </div>
       </div>
 
@@ -80,6 +83,7 @@ export function CityGrid({
               const def = building ? BUILDING_CATALOG[building.type] : null;
 
               if (building && def) {
+                const info = getBuildingInfo(building.type);
                 const isCommercial = def.category === "COMMERCIAL";
                 return (
                   <div
@@ -98,14 +102,14 @@ export function CityGrid({
                         {renderBuildingIcon(def.iconName)}
                       </div>
                       <span className="text-[9px] sm:text-[10px] font-mono font-bold px-1.5 py-0.5 rounded-full bg-black/60 border border-white/15 text-white shadow-sm">
-                        L{building.level}
+                        {language === "uz" ? "D" : "L"}{building.level}
                       </span>
                     </div>
 
                     {/* Middle: Name on desktop */}
                     <div className="relative z-10 hidden sm:block">
                       <div className="text-xs font-bold text-white truncate leading-tight">
-                        {def.name}
+                        {info.name}
                       </div>
                       <div className="text-[10px] text-slate-400 font-mono">
                         ({x}, {y})
@@ -118,13 +122,13 @@ export function CityGrid({
                         <div className="text-[9px] sm:text-[10px] font-bold text-emerald-400 font-mono flex items-center gap-0.5">
                           <Zap className="w-2.5 h-2.5 text-emerald-400 shrink-0" />
                           <span>
-                            +${(def.baseIncome * Math.pow(1.4, building.level - 1)).toFixed(1)}/s
+                            +${(def.baseIncome * Math.pow(1.4, building.level - 1)).toFixed(1)}{t("perSec")}
                           </span>
                         </div>
                       ) : (
                         <div className="text-[9px] sm:text-[10px] font-bold text-blue-300 font-mono flex items-center gap-0.5">
                           <Sparkles className="w-2.5 h-2.5 text-blue-400 shrink-0" />
-                          <span>+{def.basePopulation * building.level} Pop</span>
+                          <span>+{def.basePopulation * building.level} {t("citizens")}</span>
                         </div>
                       )}
                     </div>

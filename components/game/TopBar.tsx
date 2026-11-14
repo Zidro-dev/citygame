@@ -4,6 +4,8 @@ import Link from "next/link";
 import { formatCurrency, formatNumber } from "@/lib/utils";
 import type { CityCalculationResult } from "@/lib/game-engine";
 import { logoutAction } from "@/server-actions/auth";
+import { useLanguage } from "@/lib/LanguageContext";
+import { LanguageSwitcher } from "@/components/ui/LanguageSwitcher";
 import {
   Coins,
   Users,
@@ -34,8 +36,12 @@ export function TopBar({
   onSync,
   onOpenBridgeModal,
 }: TopBarProps) {
+  const { t, language } = useLanguage();
   const efficiencyPercent = Math.round(economy.efficiency * 100);
   const isDeficit = economy.efficiency < 1.0 && economy.totalRequiredPopulation > 0;
+
+  const mayorCityTitle =
+    language === "uz" ? `${username} shahri` : `${username}'s Metropolis`;
 
   return (
     <header className="sticky top-0 z-40 w-full glass-panel border-b border-white/10 px-4 py-3 shadow-2xl backdrop-blur-xl">
@@ -52,13 +58,13 @@ export function TopBar({
             <div>
               <div className="flex items-center gap-2">
                 <span className="font-bold text-white tracking-tight text-sm sm:text-base">
-                  {username}&apos;s Metropolis
+                  {mayorCityTitle}
                 </span>
                 <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 uppercase">
                   5x5
                 </span>
               </div>
-              <p className="text-[11px] text-slate-400">Metropolis Console</p>
+              <p className="text-[11px] text-slate-400">{t("metropolisConsole")}</p>
             </div>
           </Link>
         </div>
@@ -70,7 +76,7 @@ export function TopBar({
             <Coins className="w-4 h-4 text-amber-400 shrink-0" />
             <div>
               <div className="text-[10px] font-medium text-slate-400 uppercase tracking-wider">
-                Treasury
+                {t("treasury")}
               </div>
               <div
                 suppressHydrationWarning
@@ -86,9 +92,9 @@ export function TopBar({
             <Users className="w-4 h-4 text-blue-400 shrink-0" />
             <div>
               <div className="text-[10px] font-medium text-slate-400 uppercase tracking-wider flex items-center gap-1">
-                <span>Citizens</span>
+                <span>{t("population")}</span>
                 {isDeficit && (
-                  <span title="Labor shortage: build more housing!">
+                  <span title={t("laborShortage")}>
                     <AlertTriangle className="w-2.5 h-2.5 text-amber-400 inline" />
                   </span>
                 )}
@@ -99,7 +105,7 @@ export function TopBar({
               >
                 <span>{formatNumber(economy.totalPopulation)}</span>
                 <span className="text-[10px] font-normal text-slate-400">
-                  / {economy.totalRequiredPopulation} req
+                  / {economy.totalRequiredPopulation} {t("req")}
                 </span>
               </div>
             </div>
@@ -110,24 +116,20 @@ export function TopBar({
             <TrendingUp className="w-4 h-4 text-emerald-400 shrink-0" />
             <div>
               <div className="text-[10px] font-medium text-slate-400 uppercase tracking-wider">
-                Revenue
+                {t("revenue")}
               </div>
               <div
                 suppressHydrationWarning
                 className="text-sm sm:text-base font-bold text-emerald-300 font-mono tracking-tight"
               >
-                +{formatCurrency(economy.finalIncomePerSec)}/s
+                +{formatCurrency(economy.finalIncomePerSec)}{t("perSec")}
               </div>
             </div>
           </div>
 
           {/* 4. Efficiency Badge */}
           <div
-            title={
-              isDeficit
-                ? `Commercial income reduced to ${efficiencyPercent}% due to worker shortage.`
-                : "Workforce fully satisfied at 100%."
-            }
+            title={isDeficit ? t("effReduced") : t("effFull")}
             className={`hidden md:flex px-2.5 py-1.5 rounded-xl border text-xs font-mono items-center gap-1.5 ${
               isDeficit
                 ? "bg-amber-500/10 border-amber-500/30 text-amber-300"
@@ -135,18 +137,18 @@ export function TopBar({
             }`}
           >
             <Sparkles className="w-3 h-3" />
-            <span>{efficiencyPercent}% Eff</span>
+            <span>{efficiencyPercent}% {t("eff")}</span>
           </div>
 
           {/* 5. Tourism Bridges Badge & Button */}
           <button
             onClick={onOpenBridgeModal}
-            title="Manage Tourism Bridges"
+            title={t("allianceTitle")}
             className="glass-card-hover px-3 py-1.5 rounded-xl border-purple-500/30 bg-purple-500/10 text-purple-300 text-xs font-medium flex items-center gap-1.5 cursor-pointer shadow-[0_0_15px_rgba(168,85,247,0.15)]"
           >
             <Network className="w-3.5 h-3.5 text-purple-400" />
             <span>
-              {economy.bridgeCount}/9 Bridges{" "}
+              {economy.bridgeCount}/9 {t("bridges")}{" "}
               <span className="text-purple-200 font-bold">
                 (+{Math.round((economy.bridgeMultiplier - 1) * 100)}%)
               </span>
@@ -156,21 +158,24 @@ export function TopBar({
 
         {/* Global Navigation & Actions */}
         <div className="flex items-center gap-2">
+          {/* Language Switcher */}
+          <LanguageSwitcher />
+
           {/* Leaderboard Link */}
           <Link
             href="/leaderboard"
             className="p-2 rounded-xl bg-slate-800/80 hover:bg-slate-700/80 border border-white/5 hover:border-cyan-500/30 text-slate-300 hover:text-cyan-400 transition flex items-center gap-1.5 text-xs font-medium cursor-pointer"
-            title="Global Rankings"
+            title={t("globalLeaderboards")}
           >
             <Trophy className="w-4 h-4 text-amber-400" />
-            <span className="hidden sm:inline">Rankings</span>
+            <span className="hidden sm:inline">{t("rankings")}</span>
           </Link>
 
           {/* Sync Button */}
           <button
             onClick={onSync}
             disabled={isActionPending}
-            title="Sync Balance to Server"
+            title={t("syncTooltip")}
             className="p-2 rounded-xl bg-slate-800/80 hover:bg-cyan-500/20 hover:text-cyan-300 border border-white/5 hover:border-cyan-500/30 text-slate-400 transition disabled:opacity-50 cursor-pointer"
           >
             <RefreshCw
@@ -182,7 +187,7 @@ export function TopBar({
           <form action={logoutAction}>
             <button
               type="submit"
-              title="Logout Mayor"
+              title={t("logoutTooltip")}
               className="p-2 rounded-xl bg-slate-800/80 hover:bg-rose-500/20 hover:text-rose-300 border border-white/5 hover:border-rose-500/30 text-slate-400 transition cursor-pointer"
             >
               <LogOut className="w-4 h-4" />
