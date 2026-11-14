@@ -1,23 +1,18 @@
 "use client";
 
-import { useState } from "react";
+import React, { useState } from "react";
 import { GRID_SIZE, BUILDING_CATALOG } from "@/lib/game-constants";
 import type { BuildingState } from "@/lib/game-engine";
 import { useLanguage } from "@/lib/LanguageContext";
 import {
-  Plus,
-  Home,
-  Building2,
-  Store,
-  ShoppingBag,
-  Briefcase,
-  Trees,
-  FlaskConical,
-  Gamepad2,
-  Users,
-  Sparkles,
-  Zap,
-} from "lucide-react";
+  IsometricDefs,
+  YashilTurarJoylar3D,
+  TijoratSanoat3D,
+  IlmFanLab3D,
+  KongilocharMarkaz3D,
+  ModernTower3D,
+  EmptyPlot3D,
+} from "./isometric/IsometricBuildings3D";
 
 interface IsometricBoardProps {
   buildings: BuildingState[];
@@ -30,272 +25,322 @@ export function IsometricBoard({
   onSelectEmptyTile,
   onSelectBuilding,
 }: IsometricBoardProps) {
-  const { t, getBuildingInfo } = useLanguage();
-  const [hoveredTile, setHoveredTile] = useState<string | null>(null);
+  const { getBuildingInfo } = useLanguage();
+  const [selectedHoverId, setSelectedHoverId] = useState<string | null>(null);
 
-  // Map buildings by coordinates "x,y"
+  // Map buildings by coordinates "x,y" for O(1) lookup
   const buildingMap = new Map<string, BuildingState>();
   for (const b of buildings) {
     buildingMap.set(`${b.grid_x},${b.grid_y}`, b);
   }
 
-  // Helper for custom 3D building rendering
-  const renderBuilding3D = (building: BuildingState) => {
-    const def = BUILDING_CATALOG[building.type];
-    if (!def) return null;
-    const info = getBuildingInfo(building.type);
+  // Isometric Grid Projection Constants
+  const TILE_W = 108;
+  const TILE_H = 54;
+  const ORIGIN_X = 500;
+  const ORIGIN_Y = 190;
 
-    // Differentiate visual 3D model based on building type
-    const isGreenRes = building.type === "GREEN_RESIDENTIAL" || building.type === "RESIDENTIAL_SMALL";
-    const isCommercial = def.category === "COMMERCIAL" || building.type === "COMMERCIAL_SHOP" || building.type === "COMMERCIAL_MALL";
-    const isScience = building.type === "SCIENCE_LAB";
-    const isEntertainment = building.type === "ENTERTAINMENT_CENTER";
-
-    return (
-      <div className="relative w-full h-full flex flex-col items-center justify-center pointer-events-auto">
-        {/* Floating Label / Badge above building */}
-        <div className="absolute -top-12 z-30 flex flex-col items-center pointer-events-none whitespace-nowrap animate-bounce-subtle">
-          <div className="px-2 py-0.5 rounded-full bg-slate-950/90 border border-cyan-400/50 text-[10px] font-bold text-white shadow-[0_0_12px_rgba(6,182,212,0.5)] flex items-center gap-1.5">
-            <span>{info.name}</span>
-            <span className="text-[9px] font-mono text-cyan-300 px-1 py-0.2 rounded bg-cyan-500/20">
-              L{building.level}
-            </span>
-          </div>
-
-          {/* Sub badge if Green Housing */}
-          {isGreenRes && (
-            <div className="mt-0.5 px-1.5 py-0.2 rounded-full bg-emerald-950/80 border border-emerald-500/40 text-[9px] text-emerald-300 font-mono flex items-center gap-1">
-              <span>👥 401</span>
-              <span>👤 99</span>
-            </div>
-          )}
-
-          {/* Arrow pointer */}
-          <div className="w-1.5 h-1.5 bg-slate-950 border-r border-b border-cyan-400/50 rotate-45 -mt-0.5" />
-        </div>
-
-        {/* 3D Isometric Isometric Block representation */}
-        <div className="relative w-16 h-16 sm:w-20 sm:h-20 transition-transform duration-200 group-hover:scale-105">
-          {/* Base shadow */}
-          <div className="absolute inset-0 bg-black/60 rounded-xl blur-md -bottom-2" />
-
-          {/* Green Housing 3D Model */}
-          {isGreenRes && (
-            <div className="relative w-full h-full rounded-2xl bg-gradient-to-t from-emerald-800 via-emerald-600 to-teal-500 border border-emerald-400/60 p-1.5 shadow-[0_0_20px_rgba(16,185,129,0.4)] flex flex-col justify-between overflow-hidden">
-              {/* Roof Garden & Foliage */}
-              <div className="flex items-center justify-between text-emerald-200">
-                <Trees className="w-4 h-4 text-emerald-300 animate-pulse" />
-                <span className="text-[8px] font-mono font-bold bg-emerald-950/60 px-1 rounded text-emerald-200">
-                  ECO
-                </span>
-              </div>
-              {/* Windows Grid */}
-              <div className="grid grid-cols-3 gap-1 my-auto px-0.5">
-                {Array.from({ length: 6 }).map((_, i) => (
-                  <div key={i} className="h-2 rounded bg-yellow-200/80 shadow-[0_0_4px_rgba(254,240,138,0.8)]" />
-                ))}
-              </div>
-              <div className="text-[9px] font-bold text-center text-white truncate">
-                Yashil Uylar
-              </div>
-            </div>
-          )}
-
-          {/* Commercial / Factory 3D Model */}
-          {isCommercial && (
-            <div className="relative w-full h-full rounded-2xl bg-gradient-to-t from-purple-900 via-indigo-700 to-pink-600 border border-pink-400/60 p-1.5 shadow-[0_0_25px_rgba(236,72,153,0.4)] flex flex-col justify-between overflow-hidden">
-              {/* Neon Sign */}
-              <div className="text-center font-black tracking-widest text-[8px] text-pink-300 uppercase bg-black/50 rounded py-0.5 border border-pink-500/40">
-                TIJORAT
-              </div>
-              {/* Neon Windows */}
-              <div className="grid grid-cols-2 gap-1 my-auto">
-                <div className="h-3 rounded bg-cyan-400 shadow-[0_0_8px_rgba(6,182,212,0.8)]" />
-                <div className="h-3 rounded bg-pink-400 shadow-[0_0_8px_rgba(244,114,182,0.8)]" />
-              </div>
-              <div className="flex items-center justify-between text-[9px] text-amber-300 font-mono font-bold">
-                <Store className="w-3.5 h-3.5" />
-                <span>+${(def.baseIncome * Math.pow(1.4, building.level - 1)).toFixed(0)}/s</span>
-              </div>
-            </div>
-          )}
-
-          {/* Science Laboratory 3D Model */}
-          {isScience && (
-            <div className="relative w-full h-full rounded-2xl bg-gradient-to-t from-slate-900 via-blue-900 to-cyan-500 border border-cyan-300/80 p-1.5 shadow-[0_0_25px_rgba(6,182,212,0.6)] flex flex-col justify-between overflow-hidden">
-              {/* Holographic energy reactor */}
-              <div className="mx-auto w-5 h-5 rounded-full bg-cyan-400/30 border border-cyan-300 flex items-center justify-center animate-spin-slow">
-                <FlaskConical className="w-3 h-3 text-cyan-200" />
-              </div>
-              <div className="text-center text-[8px] font-mono text-cyan-200 font-bold bg-black/40 rounded py-0.5">
-                LAB ⚛️
-              </div>
-              <div className="text-[9px] font-mono font-bold text-center text-cyan-300">
-                +2 Ilm-fan
-              </div>
-            </div>
-          )}
-
-          {/* Entertainment Center 3D Model */}
-          {isEntertainment && (
-            <div className="relative w-full h-full rounded-2xl bg-gradient-to-t from-fuchsia-950 via-purple-800 to-amber-500 border border-amber-400/80 p-1.5 shadow-[0_0_25px_rgba(245,158,11,0.5)] flex flex-col justify-between overflow-hidden">
-              <div className="text-center font-black text-[7px] text-amber-200 tracking-wider bg-black/60 rounded py-0.5 border border-amber-500/40">
-                KO&apos;NGILOCHAR
-              </div>
-              <div className="mx-auto text-amber-300 my-auto">
-                <Gamepad2 className="w-5 h-5 animate-pulse" />
-              </div>
-              <div className="text-[8px] font-bold text-center text-white">
-                Mini-o&apos;yinlar
-              </div>
-            </div>
-          )}
-
-          {/* Fallback building model */}
-          {!isGreenRes && !isCommercial && !isScience && !isEntertainment && (
-            <div className="relative w-full h-full rounded-2xl bg-gradient-to-t from-slate-800 to-indigo-600 border border-white/20 p-1.5 flex flex-col justify-between">
-              <Building2 className="w-5 h-5 text-slate-200 mx-auto" />
-              <div className="text-[8px] font-bold text-center text-white truncate">
-                {info.name}
-              </div>
-            </div>
-          )}
-        </div>
-      </div>
-    );
+  const getScreenCoords = (gx: number, gy: number) => {
+    return {
+      x: ORIGIN_X + (gx - gy) * (TILE_W / 2),
+      y: ORIGIN_Y + (gx + gy) * (TILE_H / 2),
+    };
   };
 
-  return (
-    <div className="relative w-full flex-1 flex items-center justify-center min-h-[580px] p-2 overflow-hidden select-none">
-      {/* ------------------------------------------------------------- */}
-      {/* 1. BRIDGES EXTENDING OUT (Matching the 4 corners in screenshot) */}
-      {/* ------------------------------------------------------------- */}
+  // Generate all 25 tile positions sorted by depth (gx + gy) for 100% correct isometric overlap
+  const tiles = [];
+  for (let gy = 0; gy < GRID_SIZE; gy++) {
+    for (let gx = 0; gx < GRID_SIZE; gx++) {
+      tiles.push({ gx, gy, depth: gx + gy });
+    }
+  }
+  tiles.sort((a, b) => a.depth - b.depth);
 
-      {/* Top-Left Bridge: @Ali - Yashil shahar */}
-      <div className="absolute top-4 left-6 z-20 flex flex-col items-center pointer-events-auto">
-        <div className="px-2.5 py-1 rounded-full bg-slate-950/80 border border-cyan-500/40 text-[11px] font-bold text-cyan-300 shadow-[0_0_15px_rgba(6,182,212,0.3)]">
+  return (
+    <div className="relative w-full flex-1 flex flex-col items-center justify-center min-h-[580px] p-1 overflow-hidden select-none">
+      {/* ------------------------------------------------------------------ */}
+      {/* 1. FLOATING OVERLAY LABELS & BADGES (Matching Reference Image) */}
+      {/* ------------------------------------------------------------------ */}
+
+      {/* Top-Left Bridge Tag: @Ali - Yashil shahar */}
+      <div className="absolute top-2 left-6 z-20 pointer-events-auto">
+        <div className="px-3 py-1 rounded-full bg-slate-950/90 border border-cyan-500/40 text-xs font-bold text-cyan-300 shadow-[0_0_15px_rgba(6,182,212,0.3)]">
           @Ali - Yashil shahar
-        </div>
-        {/* Bridge span graphic */}
-        <div className="w-28 h-6 border-b-2 border-dashed border-cyan-400/50 relative flex items-center justify-center">
-          <div className="w-full h-1 bg-cyan-500/20" />
-          <div className="absolute w-2 h-1 bg-cyan-300 rounded-full animate-traffic-forward" />
         </div>
       </div>
 
-      {/* Top-Right Bridge: @Samar - IT Hab with +15% Hamkorlik Bonusi */}
-      <div className="absolute top-4 right-6 z-20 flex flex-col items-center pointer-events-auto">
-        <div className="px-2.5 py-1 rounded-full bg-slate-950/80 border border-purple-500/40 text-[11px] font-bold text-purple-300 shadow-[0_0_15px_rgba(168,85,247,0.3)]">
+      {/* Top-Right Bridge Tag: @Samar - IT Hab with +15% Hamkorlik Bonusi */}
+      <div className="absolute top-2 right-6 z-20 flex flex-col items-end pointer-events-auto">
+        <div className="px-3 py-1 rounded-full bg-slate-950/90 border border-purple-500/40 text-xs font-bold text-purple-300 shadow-[0_0_15px_rgba(168,85,247,0.3)]">
           @Samar - IT Hab
         </div>
-        <div className="mt-1 px-2 py-0.5 rounded-lg bg-emerald-950/80 border border-emerald-500/40 text-[10px] text-emerald-300 font-bold">
+        <div className="mt-1 px-2.5 py-1 rounded-xl bg-emerald-950/90 border border-emerald-500/40 text-[11px] text-emerald-300 font-bold text-right shadow-sm">
           +15% Hamkorlik Bonusi
-          <span className="block text-[8px] font-normal text-slate-400">
+          <span className="block text-[9px] font-normal text-slate-400">
             (Sanoat-Yashil hamkorligi)
           </span>
         </div>
-        <div className="w-28 h-6 border-b-2 border-dashed border-purple-400/50 relative flex items-center justify-center">
-          <div className="w-full h-1 bg-purple-500/20" />
-          <div className="absolute w-2 h-1 bg-purple-300 rounded-full animate-traffic-forward" />
-        </div>
       </div>
 
-      {/* Bottom-Left Bridge: +5% Turizm */}
-      <div className="absolute bottom-6 left-8 z-20 flex flex-col items-center pointer-events-auto">
-        <div className="w-28 h-6 border-t-2 border-dashed border-cyan-400/50 relative flex items-center justify-center">
-          <div className="w-full h-1 bg-cyan-500/20" />
-          <div className="absolute w-2 h-1 bg-cyan-300 rounded-full animate-traffic-reverse" />
-        </div>
-        <div className="px-2.5 py-1 rounded-full bg-emerald-950/80 border border-emerald-500/40 text-[10px] font-bold text-emerald-300 shadow-[0_0_12px_rgba(16,185,129,0.3)]">
+      {/* Bottom-Left Bridge Tag: +5% Turizm */}
+      <div className="absolute bottom-4 left-6 z-20 pointer-events-auto">
+        <div className="px-3 py-1 rounded-full bg-emerald-950/90 border border-emerald-500/40 text-[11px] font-bold text-emerald-300 shadow-[0_0_15px_rgba(16,185,129,0.3)]">
           +5% Turizm
         </div>
       </div>
 
-      {/* Bottom-Right Bridge: @Samar - IT Hab */}
-      <div className="absolute bottom-6 right-8 z-20 flex flex-col items-center pointer-events-auto">
-        <div className="w-28 h-6 border-t-2 border-dashed border-purple-400/50 relative flex items-center justify-center">
-          <div className="w-full h-1 bg-purple-500/20" />
-          <div className="absolute w-2 h-1 bg-purple-300 rounded-full animate-traffic-reverse" />
-        </div>
-        <div className="px-2.5 py-1 rounded-full bg-slate-950/80 border border-purple-500/40 text-[11px] font-bold text-purple-300 shadow-[0_0_15px_rgba(168,85,247,0.3)]">
+      {/* Bottom-Right Bridge Tag: @Samar - IT Hab */}
+      <div className="absolute bottom-4 right-6 z-20 pointer-events-auto">
+        <div className="px-3 py-1 rounded-full bg-slate-950/90 border border-purple-500/40 text-xs font-bold text-purple-300 shadow-[0_0_15px_rgba(168,85,247,0.3)]">
           @Samar - IT Hab
         </div>
       </div>
 
-      {/* ------------------------------------------------------------- */}
-      {/* 2. ISOMETRIC CITY CONTAINER (3D Perspective Transform) */}
-      {/* ------------------------------------------------------------- */}
-      <div
-        className="relative transition-transform duration-300"
-        style={{
-          transform: "perspective(1100px) rotateX(54deg) rotateZ(-34deg)",
-          transformStyle: "preserve-3d",
-        }}
+      {/* ------------------------------------------------------------------ */}
+      {/* 2. MASTER 3D ISOMETRIC VECTOR WORLD (SVG) */}
+      {/* ------------------------------------------------------------------ */}
+      <svg
+        viewBox="0 0 1000 620"
+        className="w-full h-auto max-h-[75vh] drop-shadow-2xl overflow-visible"
       >
-        {/* Outer Perimeter Asphalt Highway */}
-        <div className="p-5 rounded-3xl bg-slate-950/90 border-4 border-slate-700/50 shadow-[0_30px_60px_rgba(0,0,0,0.8)] relative">
-          {/* Neon Road Lane Markings */}
-          <div className="absolute inset-1.5 rounded-2xl border-2 border-dashed border-cyan-400/20 pointer-events-none" />
+        <IsometricDefs />
 
-          {/* Animated Cyber Cars moving along road */}
-          <div className="absolute top-1 left-10 w-3 h-1.5 bg-yellow-400 rounded-full shadow-[0_0_8px_rgba(250,204,21,0.8)] animate-traffic-forward" />
-          <div className="absolute bottom-1 right-12 w-3 h-1.5 bg-cyan-400 rounded-full shadow-[0_0_8px_rgba(6,182,212,0.8)] animate-traffic-reverse" />
-          <div className="absolute left-1 top-20 w-1.5 h-3 bg-pink-400 rounded-full shadow-[0_0_8px_rgba(244,114,182,0.8)] animate-traffic-down" />
-          <div className="absolute right-1 bottom-20 w-1.5 h-3 bg-emerald-400 rounded-full shadow-[0_0_8px_rgba(16,185,129,0.8)] animate-traffic-up" />
+        {/* Ambient Ground Grid Glow */}
+        <ellipse cx="500" cy="320" rx="380" ry="180" fill="url(#glass-front)" opacity="0.06" />
 
-          {/* Inner 5x5 Isometric Grid */}
-          <div className="grid grid-cols-5 gap-3 p-3 rounded-2xl bg-slate-900/90 border border-cyan-500/20 shadow-inner">
-            {Array.from({ length: GRID_SIZE }).map((_, y) =>
-              Array.from({ length: GRID_SIZE }).map((_, x) => {
-                const key = `${x},${y}`;
-                const building = buildingMap.get(key);
-                const isHovered = hoveredTile === key;
+        {/* -------------------------------------------------------------- */}
+        {/* FOUR SUSPENSION BRIDGES CONNECTING TO CORNERS */}
+        {/* -------------------------------------------------------------- */}
+        {/* Top-Left Bridge */}
+        <g id="bridge-top-left">
+          {/* Bridge Road Deck */}
+          <polygon points="120 70 340 180 320 190 100 80" fill="#1e293b" stroke="#334155" />
+          {/* Suspension Pylon Tower */}
+          <line x1="210" y1="115" x2="210" y2="40" stroke="#0ea5e9" strokeWidth="4" />
+          <line x1="210" y1="40" x2="110" y2="75" stroke="#38bdf8" strokeWidth="1.2" opacity="0.7" />
+          <line x1="210" y1="40" x2="330" y2="185" stroke="#38bdf8" strokeWidth="1.2" opacity="0.7" />
+          {/* Neon Deck Light */}
+          <line x1="120" y1="70" x2="340" y2="180" stroke="#06b6d4" strokeWidth="2" filter="url(#glow-cyan)" />
+        </g>
 
-                if (building) {
-                  return (
-                    <div
-                      key={key}
-                      onClick={() => onSelectBuilding(building)}
-                      onMouseEnter={() => setHoveredTile(key)}
-                      onMouseLeave={() => setHoveredTile(null)}
-                      className="group relative w-18 h-18 sm:w-22 sm:h-22 rounded-2xl glass-card border border-cyan-400/30 p-1 flex items-center justify-center cursor-pointer transition-all duration-200 hover:-translate-y-2 hover:border-cyan-400 hover:shadow-[0_15px_30px_rgba(6,182,212,0.4)]"
-                      style={{ transformStyle: "preserve-3d" }}
-                    >
-                      {/* Counter-rotation to make 3D building stand vertically */}
-                      <div
-                        className="w-full h-full flex items-center justify-center"
-                        style={{
-                          transform: "rotateZ(34deg) rotateX(-54deg)",
-                        }}
-                      >
-                        {renderBuilding3D(building)}
-                      </div>
-                    </div>
-                  );
-                }
+        {/* Top-Right Bridge */}
+        <g id="bridge-top-right">
+          {/* Bridge Road Deck */}
+          <polygon points="880 70 660 180 680 190 900 80" fill="#1e293b" stroke="#334155" />
+          {/* Suspension Pylon Tower */}
+          <line x1="790" y1="115" x2="790" y2="40" stroke="#a855f7" strokeWidth="4" />
+          <line x1="790" y1="40" x2="890" y2="75" stroke="#c084fc" strokeWidth="1.2" opacity="0.7" />
+          <line x1="790" y1="40" x2="670" y2="185" stroke="#c084fc" strokeWidth="1.2" opacity="0.7" />
+          {/* Neon Deck Light */}
+          <line x1="880" y1="70" x2="660" y2="180" stroke="#a855f7" strokeWidth="2" filter="url(#glow-magenta)" />
+        </g>
 
-                // Empty Plot
-                return (
-                  <div
-                    key={key}
-                    onClick={() => onSelectEmptyTile(x, y)}
-                    onMouseEnter={() => setHoveredTile(key)}
-                    onMouseLeave={() => setHoveredTile(null)}
-                    className="group relative w-18 h-18 sm:w-22 sm:h-22 rounded-2xl border-2 border-dashed border-cyan-500/25 bg-slate-950/40 hover:bg-cyan-500/10 hover:border-cyan-400 p-1 flex flex-col items-center justify-center cursor-pointer transition-all duration-200 hover:-translate-y-1 hover:shadow-[0_8px_20px_rgba(6,182,212,0.2)]"
+        {/* Bottom-Left Bridge */}
+        <g id="bridge-bottom-left">
+          <polygon points="120 540 340 430 320 420 100 530" fill="#1e293b" stroke="#334155" />
+          <line x1="210" y1="495" x2="210" y2="420" stroke="#10b981" strokeWidth="4" />
+          <line x1="210" y1="420" x2="110" y2="535" stroke="#34d399" strokeWidth="1.2" opacity="0.7" />
+          <line x1="210" y1="420" x2="330" y2="425" stroke="#34d399" strokeWidth="1.2" opacity="0.7" />
+          <line x1="120" y1="540" x2="340" y2="430" stroke="#10b981" strokeWidth="2" filter="url(#glow-cyan)" />
+        </g>
+
+        {/* Bottom-Right Bridge */}
+        <g id="bridge-bottom-right">
+          <polygon points="880 540 660 430 680 420 900 530" fill="#1e293b" stroke="#334155" />
+          <line x1="790" y1="495" x2="790" y2="420" stroke="#a855f7" strokeWidth="4" />
+          <line x1="790" y1="420" x2="890" y2="535" stroke="#c084fc" strokeWidth="1.2" opacity="0.7" />
+          <line x1="790" y1="420" x2="670" y2="425" stroke="#c084fc" strokeWidth="1.2" opacity="0.7" />
+          <line x1="880" y1="540" x2="660" y2="430" stroke="#c084fc" strokeWidth="2" filter="url(#glow-magenta)" />
+        </g>
+
+        {/* -------------------------------------------------------------- */}
+        {/* PERIMETER HIGHWAY / ROADS AROUND 5x5 GRID */}
+        {/* -------------------------------------------------------------- */}
+        <g id="road-network">
+          {/* Outer Road Ring (Dark Asphalt) */}
+          <polygon
+            points="500 100 780 240 780 270 500 410 220 270 220 240"
+            fill="none"
+            stroke="#0f172a"
+            strokeWidth="32"
+          />
+          <polygon
+            points="500 100 780 240 780 270 500 410 220 270 220 240"
+            fill="none"
+            stroke="#1e293b"
+            strokeWidth="28"
+          />
+          {/* Dashed Center Road Markings */}
+          <polygon
+            points="500 100 780 240 780 270 500 410 220 270 220 240"
+            fill="none"
+            stroke="#e2e8f0"
+            strokeWidth="1.5"
+            strokeDasharray="6 8"
+            opacity="0.6"
+          />
+
+          {/* Animated 3D Cyber Vehicles on Roads */}
+          {/* Cyber Hovercar 1 (Yellow) */}
+          <g transform="translate(360, 170)">
+            <ellipse cx="0" cy="0" rx="7" ry="3.5" fill="#facc15" filter="url(#glow-gold)" />
+            <polygon points="-4 0 0 -3 5 0 0 3" fill="#fef08a" />
+          </g>
+
+          {/* Cyber Hovercar 2 (Cyan) */}
+          <g transform="translate(640, 340)">
+            <ellipse cx="0" cy="0" rx="7" ry="3.5" fill="#38bdf8" filter="url(#glow-cyan)" />
+            <polygon points="-4 0 0 -3 5 0 0 3" fill="#bae6fd" />
+          </g>
+
+          {/* Futuristic Metro Transit Bus (Pink/White) */}
+          <g transform="translate(560, 380)">
+            <polygon points="-12 -3 4 5 12 1 -4 -7" fill="#f43f5e" />
+            <polygon points="-12 -7 4 1 12 -3 -4 -11" fill="#fff" />
+          </g>
+        </g>
+
+        {/* -------------------------------------------------------------- */}
+        {/* 3. 5x5 ISOMETRIC TILES & 3D BUILDINGS (DEPTH SORTED) */}
+        {/* -------------------------------------------------------------- */}
+        <g id="city-tiles">
+          {tiles.map(({ gx, gy }) => {
+            const { x, y } = getScreenCoords(gx, gy);
+            const key = `${gx},${gy}`;
+            const building = buildingMap.get(key);
+
+            if (!building) {
+              return (
+                <EmptyPlot3D
+                  key={key}
+                  x={x}
+                  y={y}
+                  gridX={gx}
+                  gridY={gy}
+                  onClick={() => onSelectEmptyTile(gx, gy)}
+                />
+              );
+            }
+
+            // Render specific 3D isometric building model
+            const def = BUILDING_CATALOG[building.type];
+            const info = getBuildingInfo(building.type);
+
+            const isGreen =
+              building.type === "GREEN_RESIDENTIAL" ||
+              building.type === "RESIDENTIAL_SMALL";
+            const isTijorat =
+              building.type === "COMMERCIAL_SHOP" ||
+              building.type === "COMMERCIAL_MALL";
+            const isLab = building.type === "SCIENCE_LAB";
+            const isArcade = building.type === "ENTERTAINMENT_CENTER";
+            const isTower =
+              building.type === "RESIDENTIAL_TOWER" ||
+              building.type === "COMMERCIAL_OFFICE";
+
+            return (
+              <g
+                key={key}
+                onClick={() => onSelectBuilding(building)}
+                onMouseEnter={() => setSelectedHoverId(key)}
+                onMouseLeave={() => setSelectedHoverId(null)}
+                className="transition-transform duration-200"
+              >
+                {/* 3D Model */}
+                {isGreen && <YashilTurarJoylar3D x={x} y={y} />}
+                {isTijorat && <TijoratSanoat3D x={x} y={y} />}
+                {isLab && <IlmFanLab3D x={x} y={y} />}
+                {isArcade && <KongilocharMarkaz3D x={x} y={y} />}
+                {isTower && <ModernTower3D x={x} y={y} />}
+                {!isGreen && !isTijorat && !isLab && !isArcade && !isTower && (
+                  <ModernTower3D x={x} y={y} />
+                )}
+
+                {/* Floating 3D Building Title & Level Badge */}
+                <g
+                  transform={`translate(${x}, ${y - 68})`}
+                  className="pointer-events-none transition-transform duration-200 group-hover:scale-105"
+                >
+                  {/* Glass Badge Background */}
+                  <rect
+                    x="-48"
+                    y="-11"
+                    width="96"
+                    height="20"
+                    rx="10"
+                    fill="#020617"
+                    fillOpacity="0.92"
+                    stroke="#38bdf8"
+                    strokeWidth="1.2"
+                    strokeOpacity="0.7"
+                    filter="url(#glow-cyan)"
+                  />
+                  {/* Building Name */}
+                  <text
+                    x="-6"
+                    y="3"
+                    fill="#ffffff"
+                    fontSize="8.5"
+                    fontWeight="bold"
+                    textAnchor="middle"
                   >
-                    <div className="p-1.5 rounded-xl bg-white/5 group-hover:bg-cyan-500/20 text-slate-500 group-hover:text-cyan-300 transition">
-                      <Plus className="w-4 h-4" />
-                    </div>
-                    <span className="text-[8px] font-mono text-slate-600 group-hover:text-cyan-300 mt-1">
-                      ({x}, {y})
-                    </span>
-                  </div>
-                );
-              })
-            )}
-          </div>
-        </div>
-      </div>
+                    {info.name}
+                  </text>
+                  {/* Level Pill */}
+                  <rect
+                    x="24"
+                    y="-7"
+                    width="18"
+                    height="12"
+                    rx="6"
+                    fill="#0284c7"
+                    fillOpacity="0.5"
+                  />
+                  <text
+                    x="33"
+                    y="2"
+                    fill="#38bdf8"
+                    fontSize="7"
+                    fontWeight="bold"
+                    fontFamily="monospace"
+                    textAnchor="middle"
+                  >
+                    L{building.level}
+                  </text>
+
+                  {/* Sub Badge for Green Residential (👥 401 👤 99) */}
+                  {isGreen && (
+                    <g transform="translate(0, 17)">
+                      <rect
+                        x="-30"
+                        y="-7"
+                        width="60"
+                        height="14"
+                        rx="7"
+                        fill="#064e3b"
+                        fillOpacity="0.9"
+                        stroke="#10b981"
+                        strokeWidth="1"
+                      />
+                      <text
+                        x="0"
+                        y="3"
+                        fill="#6ee7b7"
+                        fontSize="7.5"
+                        fontFamily="monospace"
+                        fontWeight="bold"
+                        textAnchor="middle"
+                      >
+                        👥 401 👤 99
+                      </text>
+                    </g>
+                  )}
+                </g>
+              </g>
+            );
+          })}
+        </g>
+      </svg>
     </div>
   );
 }
