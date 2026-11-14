@@ -25,6 +25,8 @@ export interface CityCalculationResult {
   bridgeCount: number;
   bridgeMultiplier: number;
   finalIncomePerSec: number;
+  sciencePerSec: number;
+  happiness: number; // 0 to 100%
 }
 
 /**
@@ -33,11 +35,14 @@ export interface CityCalculationResult {
  */
 export function calculateCityEconomy(
   buildings: BuildingState[],
-  acceptedBridgesCount: number = 0
+  acceptedBridgesCount: number = 0,
+  boostMultiplier: number = 1.0
 ): CityCalculationResult {
   let totalPopulation = 0;
   let totalRequiredPopulation = 0;
   let rawCommercialIncome = 0;
+  let sciencePerSec = 0;
+  let totalHappinessBonus = 0;
 
   // 1. Calculate population and raw commercial stats
   for (const b of buildings) {
@@ -46,15 +51,24 @@ export function calculateCityEconomy(
 
     if (def.category === "RESIDENTIAL") {
       totalPopulation += calculateBuildingPopulation(b.type, b.level);
-    } else if (def.category === "COMMERCIAL") {
+      if (def.happinessBonus) {
+        totalHappinessBonus += def.happinessBonus * b.level;
+      }
+    } else {
+      // COMMERCIAL, SCIENCE, ENTERTAINMENT
       totalRequiredPopulation += calculateBuildingRequiredPop(b.type, b.level);
       rawCommercialIncome += calculateBuildingBaseIncome(b.type, b.level);
+
+      if (def.baseScience) {
+        sciencePerSec += def.baseScience * b.level;
+      }
+      if (def.happinessBonus) {
+        totalHappinessBonus += def.happinessBonus * b.level;
+      }
     }
   }
 
   // 2. Population vs Efficiency Logic:
-  // If required workforce > 0, efficiency = min(1, totalPopulation / totalRequiredPopulation)
-  // If no commercial buildings, efficiency is 1.0 (100%)
   const efficiency =
     totalRequiredPopulation === 0
       ? 1.0
@@ -64,12 +78,15 @@ export function calculateCityEconomy(
   const effectiveIncomePerSec = rawCommercialIncome * efficiency;
 
   // 3. Tourism Bridge Bonus:
-  // Up to 9 active bridges, +5% global boost per bridge
   const clampedBridges = Math.min(MAX_BRIDGES, Math.max(0, acceptedBridgesCount));
   const bridgeMultiplier = 1.0 + clampedBridges * BRIDGE_BONUS_PERCENT;
 
-  // Total income per second with bridge tourism multiplier applied
-  const finalIncomePerSec = effectiveIncomePerSec * bridgeMultiplier;
+  // Total income per second with bridge tourism multiplier and active event/minigame boost
+  const finalIncomePerSec = effectiveIncomePerSec * bridgeMultiplier * boostMultiplier;
+
+  // 4. Ecology & Happiness (Base 80% + bonuses - deficit penalty)
+  const deficitPenalty = efficiency < 1.0 ? Math.round((1.0 - efficiency) * 15) : 0;
+  const happiness = Math.min(100, Math.max(20, 80 + totalHappinessBonus - deficitPenalty));
 
   return {
     totalPopulation,
@@ -80,6 +97,8 @@ export function calculateCityEconomy(
     bridgeCount: clampedBridges,
     bridgeMultiplier,
     finalIncomePerSec,
+    sciencePerSec,
+    happiness,
   };
 }
 
@@ -98,18 +117,14 @@ export function calculateOfflineEarnings(
 } {
   const lastTimeMs = new Date(lastSyncTime).getTime();
   const currTimeMs = new Date(currentTime).getTime();
+  const rawElapsed = Math.max(0, Math.floor((currTimeMs - lastTimeMs) / 1000));
 
-  if (isNaN(lastTimeMs) || isNaN(currTimeMs) || currTimeMs <= lastTimeMs) {
-    return { elapsedSeconds: 0, cappedSeconds: 0, earnedAmount: 0, wasCapped: false };
-  }
-
-  const elapsedSeconds = Math.floor((currTimeMs - lastTimeMs) / 1000);
-  const cappedSeconds = Math.min(elapsedSeconds, MAX_OFFLINE_SECONDS);
-  const wasCapped = elapsedSeconds > MAX_OFFLINE_SECONDS;
-  const earnedAmount = cappedSeconds * incomePerSec;
+  const cappedSeconds = Math.min(rawElapsed, MAX_OFFLINE_SECONDS);
+  const wasCapped = rawElapsed > MAX_OFFLINE_SECONDS;
+  const earnedAmount = Math.floor(cappedSeconds * incomePerSec * 100) / 100;
 
   return {
-    elapsedSeconds,
+    elapsedSeconds: rawElapsed,
     cappedSeconds,
     earnedAmount,
     wasCapped,

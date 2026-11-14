@@ -2,15 +2,17 @@
 
 import { useState } from "react";
 import { useCityEngine, type InitialCityData } from "@/hooks/useCityEngine";
-import { TopBar } from "@/components/game/TopBar";
-import { CityGrid } from "@/components/game/CityGrid";
+import { TopResourceBar } from "@/components/game/TopResourceBar";
+import { LeftEconomyPanel } from "@/components/game/LeftEconomyPanel";
+import { IsometricBoard } from "@/components/game/IsometricBoard";
+import { RightPartnersPanel } from "@/components/game/RightPartnersPanel";
 import { BuildModal } from "@/components/game/BuildModal";
 import { UpgradeModal } from "@/components/game/UpgradeModal";
 import { OfflineModal } from "@/components/game/OfflineModal";
 import { BridgeDashboard } from "@/components/game/BridgeDashboard";
+import { MiniGameModal } from "@/components/game/MiniGameModal";
 import type { BuildingState } from "@/lib/game-engine";
-import { AlertCircle, AlertTriangle, Network, ShieldCheck } from "lucide-react";
-import { useLanguage } from "@/lib/LanguageContext";
+import { AlertCircle } from "lucide-react";
 
 interface GameBoardProps {
   username: string;
@@ -24,6 +26,13 @@ export function GameBoard({ username, initialData }: GameBoardProps) {
     bridgesCount,
     setBridgesCount,
     economy,
+    science,
+    researchedNodes,
+    researchTech,
+    boostMultiplier,
+    boostSecondsLeft,
+    triggerBoost,
+    activeEvent,
     offlineReport,
     dismissOfflineReport,
     isActionPending,
@@ -33,125 +42,91 @@ export function GameBoard({ username, initialData }: GameBoardProps) {
     syncWithServer,
   } = useCityEngine(initialData);
 
-  const { t } = useLanguage();
-
   // Modals state
   const [selectedEmptyTile, setSelectedEmptyTile] = useState<{ x: number; y: number } | null>(
     null
   );
   const [selectedBuilding, setSelectedBuilding] = useState<BuildingState | null>(null);
   const [isBridgeModalOpen, setIsBridgeModalOpen] = useState<boolean>(false);
+  const [isMiniGameOpen, setIsMiniGameOpen] = useState<boolean>(false);
 
-  // Synchronize modal building state if the building gets upgraded
+  // Synchronize modal building state if building gets upgraded
   const activeSelectedBuilding = selectedBuilding
     ? buildings.find((b) => b.id === selectedBuilding.id) || null
     : null;
-
-  const isDeficit = economy.efficiency < 1.0 && economy.totalRequiredPopulation > 0;
 
   const handleBridgeCountChanged = (count: number) => {
     setBridgesCount(count);
   };
 
+  const handleOpenBuildForType = (type: string) => {
+    // Find first empty tile
+    for (let y = 0; y < 5; y++) {
+      for (let x = 0; x < 5; x++) {
+        if (!buildings.some((b) => b.grid_x === x && b.grid_y === y)) {
+          setSelectedEmptyTile({ x, y });
+          return;
+        }
+      }
+    }
+  };
+
   return (
-    <div className="min-h-screen flex flex-col relative pb-16">
-      {/* 1. Glassmorphism Sticky Top-Bar */}
-      <TopBar
-        username={username}
+    <div className="min-h-screen flex flex-col bg-[#070b14] text-slate-100 relative overflow-x-hidden">
+      {/* Background Cyber City Ambient Glows */}
+      <div className="absolute top-10 left-1/4 w-96 h-96 bg-cyan-500/10 rounded-full blur-3xl pointer-events-none" />
+      <div className="absolute top-20 right-1/4 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl pointer-events-none" />
+      <div className="absolute bottom-10 left-1/3 w-80 h-80 bg-pink-500/10 rounded-full blur-3xl pointer-events-none" />
+
+      {/* 1. Top Resource HUD (5 pill meters matching the screenshot) */}
+      <TopResourceBar
         balance={balance}
+        science={science}
         economy={economy}
         isActionPending={isActionPending}
         onSync={syncWithServer}
-        onOpenBridgeModal={() => setIsBridgeModalOpen(true)}
+        rank={12}
       />
 
-      {/* 2. Main Content Area */}
-      <main className="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 space-y-6">
-        {/* Error Alert if any action failed */}
-        {actionError && (
-          <div className="glass-card p-3.5 rounded-2xl bg-rose-500/10 border-rose-500/30 text-rose-300 text-xs flex items-center gap-2">
-            <AlertCircle className="w-4 h-4 shrink-0 text-rose-400" />
-            <span>{actionError}</span>
-          </div>
-        )}
-
-        {/* Economic Advisory Banner */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-          {/* Workforce status */}
-          <div
-            className={`p-3.5 rounded-2xl border text-xs flex items-center gap-3 transition ${
-              isDeficit
-                ? "bg-amber-500/10 border-amber-500/30 text-amber-200"
-                : "glass-card border-white/5 text-slate-300"
-            }`}
-          >
-            <div
-              className={`p-2 rounded-xl shrink-0 ${
-                isDeficit
-                  ? "bg-amber-500/20 text-amber-300"
-                  : "bg-emerald-500/15 text-emerald-300"
-              }`}
-            >
-              {isDeficit ? (
-                <AlertTriangle className="w-4 h-4" />
-              ) : (
-                <ShieldCheck className="w-4 h-4" />
-              )}
-            </div>
-            <div>
-              <div className="font-bold">
-                {isDeficit
-                  ? t("laborDeficitTitle", { eff: Math.round(economy.efficiency * 100) })
-                  : t("laborFullTitle")}
-              </div>
-              <p className="text-[11px] text-slate-400 mt-0.5">
-                {isDeficit
-                  ? t("laborDeficitDesc", {
-                      needed: economy.totalRequiredPopulation - economy.totalPopulation,
-                    })
-                  : t("laborFullDesc")}
-              </p>
-            </div>
-          </div>
-
-          {/* Tourism status */}
-          <div className="glass-card p-3.5 rounded-2xl border-white/5 text-xs flex items-center justify-between gap-3">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-xl bg-purple-500/15 text-purple-300 shrink-0">
-                <Network className="w-4 h-4" />
-              </div>
-              <div>
-                <div className="font-bold text-white">
-                  {t("bridgeMultiplierTitle", {
-                    percent: Math.round((economy.bridgeMultiplier - 1) * 100),
-                  })}
-                </div>
-                <p className="text-[11px] text-slate-400 mt-0.5">
-                  {bridgesCount < 9
-                    ? t("bridgeMultiplierDesc", { remaining: 9 - bridgesCount })
-                    : t("bridgeMultiplierMax")}
-                </p>
-              </div>
-            </div>
-
-            <button
-              onClick={() => setIsBridgeModalOpen(true)}
-              className="px-3 py-1.5 rounded-xl bg-purple-500/20 hover:bg-purple-500/30 text-purple-300 border border-purple-500/30 text-xs font-semibold cursor-pointer transition shrink-0"
-            >
-              {t("manage")}
-            </button>
-          </div>
+      {/* Error Alert if any action failed */}
+      {actionError && (
+        <div className="max-w-xl mx-auto my-2 p-2.5 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs flex items-center justify-center gap-2">
+          <AlertCircle className="w-4 h-4 shrink-0 text-rose-400" />
+          <span>{actionError}</span>
         </div>
+      )}
 
-        {/* 3. Interactive City Grid */}
-        <CityGrid
+      {/* 2. Main 3-Column Metropolis Scene */}
+      <main className="flex-1 w-full max-w-[1700px] mx-auto p-2 sm:p-4 flex flex-col lg:flex-row items-start justify-between gap-3 relative z-10">
+        {/* Left Column: Iqtisodiyot va Texnologiya */}
+        <LeftEconomyPanel
+          balance={balance}
+          science={science}
+          efficiencyPercent={Math.round(economy.efficiency * 100)}
+          researchedNodes={researchedNodes}
+          onResearchTech={researchTech}
+          onOpenBuildModalForType={handleOpenBuildForType}
+        />
+
+        {/* Center Column: 3D Isometric Metropolis Board */}
+        <IsometricBoard
           buildings={buildings}
           onSelectEmptyTile={(x, y) => setSelectedEmptyTile({ x, y })}
           onSelectBuilding={(building) => setSelectedBuilding(building)}
         />
+
+        {/* Right Column: Hamkorlar */}
+        <RightPartnersPanel
+          bridgesCount={bridgesCount}
+          onOpenBridgeModal={() => setIsBridgeModalOpen(true)}
+          onOpenMiniGame={() => setIsMiniGameOpen(true)}
+          boostMultiplier={boostMultiplier}
+          boostSecondsLeft={boostSecondsLeft}
+          currentUsername={username}
+        />
       </main>
 
-      {/* 4. Build Menu Modal */}
+      {/* 3. Build Menu Modal */}
       {selectedEmptyTile && (
         <BuildModal
           tileCoordinates={selectedEmptyTile}
@@ -162,7 +137,7 @@ export function GameBoard({ username, initialData }: GameBoardProps) {
         />
       )}
 
-      {/* 5. Upgrade Modal */}
+      {/* 4. Upgrade Modal */}
       {activeSelectedBuilding && (
         <UpgradeModal
           building={activeSelectedBuilding}
@@ -173,7 +148,7 @@ export function GameBoard({ username, initialData }: GameBoardProps) {
         />
       )}
 
-      {/* 6. Offline Revenue Claim Modal */}
+      {/* 5. Offline Revenue Claim Modal */}
       {offlineReport && (
         <OfflineModal
           report={offlineReport}
@@ -181,11 +156,18 @@ export function GameBoard({ username, initialData }: GameBoardProps) {
         />
       )}
 
-      {/* 7. Alliance & Bridge Dashboard */}
+      {/* 6. Alliance & Bridge Dashboard */}
       <BridgeDashboard
         isOpen={isBridgeModalOpen}
         onClose={() => setIsBridgeModalOpen(false)}
         onBridgeCountChanged={handleBridgeCountChanged}
+      />
+
+      {/* 7. Interactive Mini-Game Modal */}
+      <MiniGameModal
+        isOpen={isMiniGameOpen}
+        onClose={() => setIsMiniGameOpen(false)}
+        onWinBoost={triggerBoost}
       />
     </div>
   );

@@ -37,6 +37,25 @@ export function useCityEngine(initialData: InitialCityData) {
     new Date(initialData.last_sync_time).toISOString()
   );
 
+  // Science points and research
+  const [science, setScience] = useState<number>(320);
+  const [researchedNodes, setResearchedNodes] = useState<string[]>(["science_basics"]);
+
+  // 2x Boost mechanic (from Mini-Game)
+  const [boostMultiplier, setBoostMultiplier] = useState<number>(1.0);
+  const [boostSecondsLeft, setBoostSecondsLeft] = useState<number>(0);
+
+  // Dynamic Event (Festival)
+  const [activeEvent, setActiveEvent] = useState<{
+    title: string;
+    description: string;
+    happinessBoost: number;
+  } | null>({
+    title: "Festival boshlandi!",
+    description: "+20% Aholi baxti",
+    happinessBoost: 20,
+  });
+
   // Offline earnings report modal state
   const [offlineReport, setOfflineReport] = useState<OfflineReport | null>(null);
 
@@ -47,10 +66,40 @@ export function useCityEngine(initialData: InitialCityData) {
   // Guard to ensure offline calculation runs only once on client mount
   const hasCalculatedOffline = useRef(false);
 
-  // Calculate live city economy stats (Workforce, Efficiency, $/sec, Bridge Boost)
+  // Calculate live city economy stats (Workforce, Efficiency, $/sec, Bridge Boost, Happiness)
   const economy: CityCalculationResult = useMemo(() => {
-    return calculateCityEconomy(buildings, bridgesCount);
-  }, [buildings, bridgesCount]);
+    const eco = calculateCityEconomy(buildings, bridgesCount, boostMultiplier);
+    if (activeEvent) {
+      eco.happiness = Math.min(100, eco.happiness + activeEvent.happinessBoost);
+    }
+    return eco;
+  }, [buildings, bridgesCount, boostMultiplier, activeEvent]);
+
+  // Read saved science and tech from localStorage
+  useEffect(() => {
+    try {
+      const savedScience = localStorage.getItem("citygame_science");
+      if (savedScience) {
+        setScience(Number(savedScience) || 320);
+      }
+      const savedTech = localStorage.getItem("citygame_tech");
+      if (savedTech) {
+        setResearchedNodes(JSON.parse(savedTech));
+      }
+    } catch {
+      // Ignore
+    }
+  }, []);
+
+  // Save science to localStorage periodically
+  useEffect(() => {
+    try {
+      localStorage.setItem("citygame_science", science.toString());
+      localStorage.setItem("citygame_tech", JSON.stringify(researchedNodes));
+    } catch {
+      // Ignore
+    }
+  }, [science, researchedNodes]);
 
   // --------------------------------------------------------------------------
   // 1. Initial Offline Calculation (Runs strictly once on client after hydration)
@@ -88,17 +137,50 @@ export function useCityEngine(initialData: InitialCityData) {
   // --------------------------------------------------------------------------
   useEffect(() => {
     const incomeRate = economy.finalIncomePerSec;
-    if (incomeRate <= 0) return;
+    const scienceRate = economy.sciencePerSec > 0 ? economy.sciencePerSec : 1;
 
     const timer = setInterval(() => {
       setBalance((prev) => prev + incomeRate);
+      setScience((prev) => prev + scienceRate);
+
+      // Decrement boost timer if active
+      setBoostSecondsLeft((prev) => {
+        if (prev <= 1) {
+          setBoostMultiplier(1.0);
+          return 0;
+        }
+        return prev - 1;
+      });
     }, 1000);
 
     return () => clearInterval(timer);
-  }, [economy.finalIncomePerSec]);
+  }, [economy.finalIncomePerSec, economy.sciencePerSec]);
 
   // --------------------------------------------------------------------------
-  // 3. Beacon / beforeUnload DB Sync on Window Close
+  // 3. Trigger 2x Boost (From Mini-game)
+  // --------------------------------------------------------------------------
+  const triggerBoost = useCallback((durationSeconds: number = 60) => {
+    setBoostMultiplier(2.0);
+    setBoostSecondsLeft(durationSeconds);
+  }, []);
+
+  // --------------------------------------------------------------------------
+  // 4. Research Tech Node
+  // --------------------------------------------------------------------------
+  const researchTech = useCallback(
+    (nodeId: string, cost: number) => {
+      if (science < cost || researchedNodes.includes(nodeId)) {
+        return false;
+      }
+      setScience((prev) => prev - cost);
+      setResearchedNodes((prev) => [...prev, nodeId]);
+      return true;
+    },
+    [science, researchedNodes]
+  );
+
+  // --------------------------------------------------------------------------
+  // 5. Beacon / beforeUnload DB Sync on Window Close
   // --------------------------------------------------------------------------
   useEffect(() => {
     const handleBeforeUnload = () => {
@@ -114,7 +196,7 @@ export function useCityEngine(initialData: InitialCityData) {
   }, []);
 
   // --------------------------------------------------------------------------
-  // 4. Secure Actions: Buy Building
+  // 6. Secure Actions: Buy Building
   // --------------------------------------------------------------------------
   const buyBuilding = useCallback(
     async (type: string, grid_x: number, grid_y: number) => {
@@ -145,7 +227,7 @@ export function useCityEngine(initialData: InitialCityData) {
   );
 
   // --------------------------------------------------------------------------
-  // 5. Secure Actions: Upgrade Building
+  // 7. Secure Actions: Upgrade Building
   // --------------------------------------------------------------------------
   const upgradeBuilding = useCallback(
     async (buildingId: string) => {
@@ -178,7 +260,7 @@ export function useCityEngine(initialData: InitialCityData) {
   );
 
   // --------------------------------------------------------------------------
-  // 6. Manual Sync with Server
+  // 8. Manual Sync with Server
   // --------------------------------------------------------------------------
   const syncWithServer = useCallback(async () => {
     setIsActionPending(true);
@@ -205,6 +287,13 @@ export function useCityEngine(initialData: InitialCityData) {
     bridgesCount,
     setBridgesCount,
     lastSyncTime,
+    science,
+    researchedNodes,
+    researchTech,
+    boostMultiplier,
+    boostSecondsLeft,
+    triggerBoost,
+    activeEvent,
     economy,
     offlineReport,
     dismissOfflineReport,

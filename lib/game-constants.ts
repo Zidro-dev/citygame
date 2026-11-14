@@ -3,12 +3,14 @@
 export interface BuildingDefinition {
   type: string;
   name: string;
-  category: "RESIDENTIAL" | "COMMERCIAL";
+  category: "RESIDENTIAL" | "COMMERCIAL" | "SCIENCE" | "ENTERTAINMENT";
   description: string;
   baseCost: number;
   baseIncome: number; // $ per second
   basePopulation: number; // residents provided
   requiredPopulation: number; // workforce required to run at 100%
+  baseScience?: number; // Science points per second
+  happinessBonus?: number; // % happiness bonus
   color: string;
   iconName: string;
 }
@@ -33,6 +35,19 @@ export const BUILDING_CATALOG: Record<string, BuildingDefinition> = {
     color: "from-blue-500 to-indigo-600",
     iconName: "Home",
   },
+  GREEN_RESIDENTIAL: {
+    type: "GREEN_RESIDENTIAL",
+    name: "Yashil Turar-joylar",
+    category: "RESIDENTIAL",
+    description: "Ekologik toza va zamonaviy yashil uylar. Fuqarolar baxtini oshiradi.",
+    baseCost: 350,
+    baseIncome: 0,
+    basePopulation: 25,
+    requiredPopulation: 0,
+    happinessBonus: 8,
+    color: "from-emerald-500 to-green-600",
+    iconName: "Trees",
+  },
   RESIDENTIAL_TOWER: {
     type: "RESIDENTIAL_TOWER",
     name: "Skyline Condo",
@@ -47,9 +62,9 @@ export const BUILDING_CATALOG: Record<string, BuildingDefinition> = {
   },
   COMMERCIAL_SHOP: {
     type: "COMMERCIAL_SHOP",
-    name: "Neon Convenience",
+    name: "Tijorat do'koni",
     category: "COMMERCIAL",
-    description: "Local shop generating steady income. Requires 5 workers.",
+    description: "Barqaror daromad keltiruvchi do'kon. 5 nafar ishchi talab qiladi.",
     baseCost: 150,
     baseIncome: 6.0, // $6/sec
     basePopulation: 0,
@@ -68,6 +83,32 @@ export const BUILDING_CATALOG: Record<string, BuildingDefinition> = {
     requiredPopulation: 30,
     color: "from-amber-500 to-orange-600",
     iconName: "ShoppingBag",
+  },
+  SCIENCE_LAB: {
+    type: "SCIENCE_LAB",
+    name: "Ilmiy Laboratoriya",
+    category: "SCIENCE",
+    description: "Yangi texnologiyalar va kashfiyotlar markazi. Har soniyada ilm-fan ochkolari keltiradi.",
+    baseCost: 1500,
+    baseIncome: 15.0,
+    basePopulation: 0,
+    requiredPopulation: 15,
+    baseScience: 2,
+    color: "from-cyan-500 to-blue-600",
+    iconName: "FlaskConical",
+  },
+  ENTERTAINMENT_CENTER: {
+    type: "ENTERTAINMENT_CENTER",
+    name: "Ko'ngilochar mini-o'yinlar markazi",
+    category: "ENTERTAINMENT",
+    description: "Shaharga ko'p miqdorda sayyohlarni jalb qiladi va aholi baxtini oshiradi.",
+    baseCost: 2000,
+    baseIncome: 60.0,
+    basePopulation: 0,
+    requiredPopulation: 25,
+    happinessBonus: 15,
+    color: "from-fuchsia-500 to-pink-600",
+    iconName: "Gamepad2",
   },
   COMMERCIAL_OFFICE: {
     type: "COMMERCIAL_OFFICE",
@@ -100,19 +141,19 @@ export function calculateBuildingPopulation(type: string, level: number): number
 }
 
 /**
- * Calculates raw base income per second for a commercial building at a specific level
+ * Calculates raw base income per second for commercial/special buildings
  */
 export function calculateBuildingBaseIncome(type: string, level: number): number {
   const def = BUILDING_CATALOG[type];
-  if (!def || def.category !== "COMMERCIAL") return 0;
+  if (!def || def.category === "RESIDENTIAL") return 0;
   return def.baseIncome * Math.pow(1.4, level - 1);
 }
 
 /**
- * Calculates required population for a commercial building
+ * Calculates required population for commercial/special buildings
  */
 export function calculateBuildingRequiredPop(type: string, level: number): number {
   const def = BUILDING_CATALOG[type];
-  if (!def || def.category !== "COMMERCIAL") return 0;
+  if (!def || def.category === "RESIDENTIAL") return 0;
   return Math.round(def.requiredPopulation * Math.pow(1.2, level - 1));
 }
