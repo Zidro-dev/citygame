@@ -11,6 +11,7 @@ import { UpgradeModal } from "@/components/game/UpgradeModal";
 import { OfflineModal } from "@/components/game/OfflineModal";
 import { BridgeDashboard } from "@/components/game/BridgeDashboard";
 import { MiniGameModal } from "@/components/game/MiniGameModal";
+import { GRID_SIZE } from "@/lib/game-constants";
 import type { BuildingState } from "@/lib/game-engine";
 import { AlertCircle } from "lucide-react";
 
@@ -61,8 +62,8 @@ export function GameBoard({ username, initialData }: GameBoardProps) {
 
   const handleOpenBuildForType = (type: string) => {
     // Find first empty tile
-    for (let y = 0; y < 5; y++) {
-      for (let x = 0; x < 5; x++) {
+    for (let y = 0; y < GRID_SIZE; y++) {
+      for (let x = 0; x < GRID_SIZE; x++) {
         if (!buildings.some((b) => b.grid_x === x && b.grid_y === y)) {
           setSelectedEmptyTile({ x, y });
           return;

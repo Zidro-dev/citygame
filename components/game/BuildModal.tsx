@@ -16,6 +16,9 @@ import {
   TrendingUp,
   Loader2,
   CheckCircle,
+  Trees,
+  FlaskConical,
+  Gamepad2,
 } from "lucide-react";
 
 interface BuildModalProps {
@@ -34,7 +37,7 @@ export function BuildModal({
   onBuild,
 }: BuildModalProps) {
   const { t, getBuildingInfo } = useLanguage();
-  const [filter, setFilter] = useState<"ALL" | "RESIDENTIAL" | "COMMERCIAL">("ALL");
+  const [filter, setFilter] = useState<"ALL" | "RESIDENTIAL" | "COMMERCIAL" | "SCIENCE" | "ENTERTAINMENT">("ALL");
   const [selectedType, setSelectedType] = useState<string | null>("RESIDENTIAL_SMALL");
 
   if (!tileCoordinates) return null;
@@ -56,6 +59,12 @@ export function BuildModal({
         return <ShoppingBag className="w-5 h-5 text-amber-400" />;
       case "Briefcase":
         return <Briefcase className="w-5 h-5 text-cyan-400" />;
+      case "Trees":
+        return <Trees className="w-5 h-5 text-emerald-400" />;
+      case "FlaskConical":
+        return <FlaskConical className="w-5 h-5 text-cyan-400" />;
+      case "Gamepad2":
+        return <Gamepad2 className="w-5 h-5 text-purple-400" />;
       default:
         return <Building2 className="w-5 h-5 text-slate-400" />;
     }
@@ -106,7 +115,7 @@ export function BuildModal({
 
         {/* Filter Pills */}
         <div className="flex items-center gap-2 pt-4 pb-2 relative z-10">
-          {(["ALL", "RESIDENTIAL", "COMMERCIAL"] as const).map((tab) => (
+          {(["ALL", "RESIDENTIAL", "COMMERCIAL", "SCIENCE", "ENTERTAINMENT"] as const).map((tab) => (
             <button
               key={tab}
               onClick={() => setFilter(tab)}
@@ -120,7 +129,11 @@ export function BuildModal({
                 ? t("tabAll")
                 : tab === "RESIDENTIAL"
                 ? t("tabResidential")
-                : t("tabCommercial")}
+                : tab === "COMMERCIAL"
+                ? t("tabCommercial")
+                : tab === "SCIENCE"
+                ? "Ilm-fan"
+                : "Ko'ngilochar"}
             </button>
           ))}
         </div>

@@ -15,7 +15,7 @@ export interface BuildingDefinition {
   iconName: string;
 }
 
-export const GRID_SIZE = 5; // 5x5 city grid (0 to 4)
+export const GRID_SIZE = 10; // 10x10 city grid (0 to 9)
 export const MAX_OFFLINE_SECONDS = 24 * 60 * 60; // 24 hours security cap (86,400s)
 export const MAX_BRIDGES = 9; // Maximum 9 connected cities
 export const BRIDGE_BONUS_PERCENT = 0.05; // +5% global income per active bridge

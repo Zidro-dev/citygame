@@ -14,6 +14,9 @@ import {
   Briefcase,
   Loader2,
   Sparkles,
+  Trees,
+  FlaskConical,
+  Gamepad2,
 } from "lucide-react";
 
 interface UpgradeModalProps {
@@ -63,6 +66,12 @@ export function UpgradeModal({
         return <ShoppingBag className="w-6 h-6 text-amber-400" />;
       case "Briefcase":
         return <Briefcase className="w-6 h-6 text-cyan-400" />;
+      case "Trees":
+        return <Trees className="w-6 h-6 text-emerald-400" />;
+      case "FlaskConical":
+        return <FlaskConical className="w-6 h-6 text-cyan-400" />;
+      case "Gamepad2":
+        return <Gamepad2 className="w-6 h-6 text-purple-400" />;
       default:
         return <Building2 className="w-6 h-6 text-slate-400" />;
     }

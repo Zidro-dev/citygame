@@ -25,7 +25,7 @@ export function IsometricBoard({
   onSelectEmptyTile,
   onSelectBuilding,
 }: IsometricBoardProps) {
-  const { getBuildingInfo } = useLanguage();
+  const { getBuildingInfo, language } = useLanguage();
   const [selectedHoverId, setSelectedHoverId] = useState<string | null>(null);
 
   // Map buildings by coordinates "x,y" for O(1) lookup
@@ -34,11 +34,11 @@ export function IsometricBoard({
     buildingMap.set(`${b.grid_x},${b.grid_y}`, b);
   }
 
-  // Isometric Grid Projection Constants
-  const TILE_W = 108;
-  const TILE_H = 54;
-  const ORIGIN_X = 500;
-  const ORIGIN_Y = 190;
+  // 10x10 Isometric Grid Projection Constants
+  const TILE_W = 72;
+  const TILE_H = 36;
+  const ORIGIN_X = 550;
+  const ORIGIN_Y = 120;
 
   const getScreenCoords = (gx: number, gy: number) => {
     return {
@@ -47,7 +47,7 @@ export function IsometricBoard({
     };
   };
 
-  // Generate all 25 tile positions sorted by depth (gx + gy) for 100% correct isometric overlap
+  // Generate all 10x10 (100) tile positions sorted by depth (gx + gy)
   const tiles = [];
   for (let gy = 0; gy < GRID_SIZE; gy++) {
     for (let gx = 0; gx < GRID_SIZE; gx++) {
@@ -57,26 +57,28 @@ export function IsometricBoard({
   tiles.sort((a, b) => a.depth - b.depth);
 
   return (
-    <div className="relative w-full flex-1 flex flex-col items-center justify-center min-h-[580px] p-1 overflow-hidden select-none">
+    <div className="relative w-full flex-1 flex flex-col items-center justify-center min-h-[620px] p-1 overflow-hidden select-none">
       {/* ------------------------------------------------------------------ */}
-      {/* 1. FLOATING OVERLAY LABELS & BADGES (Matching Reference Image) */}
+      {/* 1. FLOATING SCI-FI ALLIANCE BADGES & STATS */}
       {/* ------------------------------------------------------------------ */}
 
       {/* Top-Left Bridge Tag: @Ali - Yashil shahar */}
       <div className="absolute top-2 left-6 z-20 pointer-events-auto">
-        <div className="px-3 py-1 rounded-full bg-slate-950/90 border border-cyan-500/40 text-xs font-bold text-cyan-300 shadow-[0_0_15px_rgba(6,182,212,0.3)]">
-          @Ali - Yashil shahar
+        <div className="px-3 py-1.5 rounded-full bg-slate-950/90 border border-cyan-400/50 text-xs font-black text-cyan-300 shadow-[0_0_20px_rgba(6,182,212,0.4)] flex items-center gap-2">
+          <span className="w-2 h-2 rounded-full bg-cyan-400 animate-ping" />
+          <span>@Ali - Yashil shahar</span>
         </div>
       </div>
 
       {/* Top-Right Bridge Tag: @Samar - IT Hab with +15% Hamkorlik Bonusi */}
       <div className="absolute top-2 right-6 z-20 flex flex-col items-end pointer-events-auto">
-        <div className="px-3 py-1 rounded-full bg-slate-950/90 border border-purple-500/40 text-xs font-bold text-purple-300 shadow-[0_0_15px_rgba(168,85,247,0.3)]">
-          @Samar - IT Hab
+        <div className="px-3 py-1.5 rounded-full bg-slate-950/90 border border-purple-400/50 text-xs font-black text-purple-300 shadow-[0_0_20px_rgba(168,85,247,0.4)] flex items-center gap-2">
+          <span className="w-2 h-2 rounded-full bg-purple-400 animate-ping" />
+          <span>@Samar - IT Hab</span>
         </div>
-        <div className="mt-1 px-2.5 py-1 rounded-xl bg-emerald-950/90 border border-emerald-500/40 text-[11px] text-emerald-300 font-bold text-right shadow-sm">
+        <div className="mt-1.5 px-3 py-1 rounded-2xl bg-emerald-950/90 border border-emerald-400/50 text-xs text-emerald-300 font-black text-right shadow-[0_0_15px_rgba(16,185,129,0.3)]">
           +15% Hamkorlik Bonusi
-          <span className="block text-[9px] font-normal text-slate-400">
+          <span className="block text-[9px] font-normal text-slate-300">
             (Sanoat-Yashil hamkorligi)
           </span>
         </div>
@@ -84,126 +86,213 @@ export function IsometricBoard({
 
       {/* Bottom-Left Bridge Tag: +5% Turizm */}
       <div className="absolute bottom-4 left-6 z-20 pointer-events-auto">
-        <div className="px-3 py-1 rounded-full bg-emerald-950/90 border border-emerald-500/40 text-[11px] font-bold text-emerald-300 shadow-[0_0_15px_rgba(16,185,129,0.3)]">
-          +5% Turizm
+        <div className="px-3 py-1.5 rounded-full bg-emerald-950/90 border border-emerald-400/50 text-xs font-black text-emerald-300 shadow-[0_0_20px_rgba(16,185,129,0.4)] flex items-center gap-2">
+          <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+          <span>+5% Turizm</span>
         </div>
       </div>
 
       {/* Bottom-Right Bridge Tag: @Samar - IT Hab */}
       <div className="absolute bottom-4 right-6 z-20 pointer-events-auto">
-        <div className="px-3 py-1 rounded-full bg-slate-950/90 border border-purple-500/40 text-xs font-bold text-purple-300 shadow-[0_0_15px_rgba(168,85,247,0.3)]">
-          @Samar - IT Hab
+        <div className="px-3 py-1.5 rounded-full bg-slate-950/90 border border-purple-400/50 text-xs font-black text-purple-300 shadow-[0_0_20px_rgba(168,85,247,0.4)] flex items-center gap-2">
+          <span className="w-2 h-2 rounded-full bg-purple-400 animate-ping" />
+          <span>@Samar - IT Hab</span>
         </div>
       </div>
 
       {/* ------------------------------------------------------------------ */}
-      {/* 2. MASTER 3D ISOMETRIC VECTOR WORLD (SVG) */}
+      {/* 2. MASTER 10x10 ISOMETRIC VECTOR WORLD (SVG) */}
       {/* ------------------------------------------------------------------ */}
       <svg
-        viewBox="0 0 1000 620"
-        className="w-full h-auto max-h-[75vh] drop-shadow-2xl overflow-visible"
+        viewBox="0 0 1100 680"
+        className="w-full h-auto max-h-[78vh] drop-shadow-2xl overflow-visible"
       >
         <IsometricDefs />
 
-        {/* Ambient Ground Grid Glow */}
-        <ellipse cx="500" cy="320" rx="380" ry="180" fill="url(#glass-front)" opacity="0.06" />
+        {/* Ambient Ground Glow */}
+        <ellipse cx="550" cy="360" rx="460" ry="220" fill="url(#glass-front)" opacity="0.08" />
 
         {/* -------------------------------------------------------------- */}
-        {/* FOUR SUSPENSION BRIDGES CONNECTING TO CORNERS */}
+        {/* FOUR THICK ILLUMINATED GLOWING ENERGY-BRIDGE PATHWAYS */}
         {/* -------------------------------------------------------------- */}
-        {/* Top-Left Bridge */}
-        <g id="bridge-top-left">
-          {/* Bridge Road Deck */}
-          <polygon points="120 70 340 180 320 190 100 80" fill="#1e293b" stroke="#334155" />
+        {/* Top-Left Energy Bridge: To @Ali - Yashil shahar */}
+        <g id="energy-bridge-top-left">
+          {/* Outer Road Bed */}
+          <polygon points="60 40 370 190 350 205 40 55" fill="#0f172a" stroke="#1e293b" strokeWidth="2" />
+          {/* Thick Glowing Cyan Energy Beam Pathway */}
+          <line
+            x1="50"
+            y1="48"
+            x2="360"
+            y2="198"
+            stroke="url(#energy-cyan)"
+            strokeWidth="10"
+            filter="url(#glow-cyan)"
+          />
+          <line
+            x1="50"
+            y1="48"
+            x2="360"
+            y2="198"
+            stroke="#ffffff"
+            strokeWidth="2.5"
+            strokeDasharray="14 10"
+            className="animate-pulse"
+          />
           {/* Suspension Pylon Tower */}
-          <line x1="210" y1="115" x2="210" y2="40" stroke="#0ea5e9" strokeWidth="4" />
-          <line x1="210" y1="40" x2="110" y2="75" stroke="#38bdf8" strokeWidth="1.2" opacity="0.7" />
-          <line x1="210" y1="40" x2="330" y2="185" stroke="#38bdf8" strokeWidth="1.2" opacity="0.7" />
-          {/* Neon Deck Light */}
-          <line x1="120" y1="70" x2="340" y2="180" stroke="#06b6d4" strokeWidth="2" filter="url(#glow-cyan)" />
+          <line x1="200" y1="120" x2="200" y2="30" stroke="#0ea5e9" strokeWidth="6" />
+          <line x1="200" y1="30" x2="60" y2="45" stroke="#38bdf8" strokeWidth="2" opacity="0.8" />
+          <line x1="200" y1="30" x2="350" y2="195" stroke="#38bdf8" strokeWidth="2" opacity="0.8" />
+          <circle cx="200" cy="30" r="4" fill="#38bdf8" filter="url(#glow-cyan)" />
         </g>
 
-        {/* Top-Right Bridge */}
-        <g id="bridge-top-right">
-          {/* Bridge Road Deck */}
-          <polygon points="880 70 660 180 680 190 900 80" fill="#1e293b" stroke="#334155" />
+        {/* Top-Right Energy Bridge: To @Samar - IT Hab */}
+        <g id="energy-bridge-top-right">
+          {/* Outer Road Bed */}
+          <polygon points="1040 40 730 190 750 205 1060 55" fill="#0f172a" stroke="#1e293b" strokeWidth="2" />
+          {/* Thick Glowing Magenta / Purple Energy Beam Pathway */}
+          <line
+            x1="1050"
+            y1="48"
+            x2="740"
+            y2="198"
+            stroke="url(#energy-purple)"
+            strokeWidth="10"
+            filter="url(#glow-magenta)"
+          />
+          <line
+            x1="1050"
+            y1="48"
+            x2="740"
+            y2="198"
+            stroke="#ffffff"
+            strokeWidth="2.5"
+            strokeDasharray="14 10"
+            className="animate-pulse"
+          />
           {/* Suspension Pylon Tower */}
-          <line x1="790" y1="115" x2="790" y2="40" stroke="#a855f7" strokeWidth="4" />
-          <line x1="790" y1="40" x2="890" y2="75" stroke="#c084fc" strokeWidth="1.2" opacity="0.7" />
-          <line x1="790" y1="40" x2="670" y2="185" stroke="#c084fc" strokeWidth="1.2" opacity="0.7" />
-          {/* Neon Deck Light */}
-          <line x1="880" y1="70" x2="660" y2="180" stroke="#a855f7" strokeWidth="2" filter="url(#glow-magenta)" />
+          <line x1="900" y1="120" x2="900" y2="30" stroke="#a855f7" strokeWidth="6" />
+          <line x1="900" y1="30" x2="1040" y2="45" stroke="#c084fc" strokeWidth="2" opacity="0.8" />
+          <line x1="900" y1="30" x2="750" y2="195" stroke="#c084fc" strokeWidth="2" opacity="0.8" />
+          <circle cx="900" cy="30" r="4" fill="#c084fc" filter="url(#glow-magenta)" />
         </g>
 
-        {/* Bottom-Left Bridge */}
-        <g id="bridge-bottom-left">
-          <polygon points="120 540 340 430 320 420 100 530" fill="#1e293b" stroke="#334155" />
-          <line x1="210" y1="495" x2="210" y2="420" stroke="#10b981" strokeWidth="4" />
-          <line x1="210" y1="420" x2="110" y2="535" stroke="#34d399" strokeWidth="1.2" opacity="0.7" />
-          <line x1="210" y1="420" x2="330" y2="425" stroke="#34d399" strokeWidth="1.2" opacity="0.7" />
-          <line x1="120" y1="540" x2="340" y2="430" stroke="#10b981" strokeWidth="2" filter="url(#glow-cyan)" />
+        {/* Bottom-Left Energy Bridge: To Allied Region (+5% Turizm) */}
+        <g id="energy-bridge-bottom-left">
+          <polygon points="60 640 370 490 350 475 40 625" fill="#0f172a" stroke="#1e293b" strokeWidth="2" />
+          <line
+            x1="50"
+            y1="632"
+            x2="360"
+            y2="482"
+            stroke="url(#energy-cyan)"
+            strokeWidth="10"
+            filter="url(#glow-cyan)"
+          />
+          <line
+            x1="50"
+            y1="632"
+            x2="360"
+            y2="482"
+            stroke="#ffffff"
+            strokeWidth="2.5"
+            strokeDasharray="14 10"
+            className="animate-pulse"
+          />
+          <line x1="200" y1="560" x2="200" y2="470" stroke="#10b981" strokeWidth="6" />
+          <line x1="200" y1="470" x2="60" y2="635" stroke="#34d399" strokeWidth="2" opacity="0.8" />
+          <line x1="200" y1="470" x2="350" y2="485" stroke="#34d399" strokeWidth="2" opacity="0.8" />
+          <circle cx="200" cy="470" r="4" fill="#34d399" filter="url(#glow-green)" />
         </g>
 
-        {/* Bottom-Right Bridge */}
-        <g id="bridge-bottom-right">
-          <polygon points="880 540 660 430 680 420 900 530" fill="#1e293b" stroke="#334155" />
-          <line x1="790" y1="495" x2="790" y2="420" stroke="#a855f7" strokeWidth="4" />
-          <line x1="790" y1="420" x2="890" y2="535" stroke="#c084fc" strokeWidth="1.2" opacity="0.7" />
-          <line x1="790" y1="420" x2="670" y2="425" stroke="#c084fc" strokeWidth="1.2" opacity="0.7" />
-          <line x1="880" y1="540" x2="660" y2="430" stroke="#c084fc" strokeWidth="2" filter="url(#glow-magenta)" />
+        {/* Bottom-Right Energy Bridge: To @Samar - IT Hab */}
+        <g id="energy-bridge-bottom-right">
+          <polygon points="1040 640 730 490 750 475 1060 625" fill="#0f172a" stroke="#1e293b" strokeWidth="2" />
+          <line
+            x1="1050"
+            y1="632"
+            x2="740"
+            y2="482"
+            stroke="url(#energy-purple)"
+            strokeWidth="10"
+            filter="url(#glow-magenta)"
+          />
+          <line
+            x1="1050"
+            y1="632"
+            x2="740"
+            y2="482"
+            stroke="#ffffff"
+            strokeWidth="2.5"
+            strokeDasharray="14 10"
+            className="animate-pulse"
+          />
+          <line x1="900" y1="560" x2="900" y2="470" stroke="#a855f7" strokeWidth="6" />
+          <line x1="900" y1="470" x2="1040" y2="635" stroke="#c084fc" strokeWidth="2" opacity="0.8" />
+          <line x1="900" y1="470" x2="750" y2="485" stroke="#c084fc" strokeWidth="2" opacity="0.8" />
+          <circle cx="900" cy="470" r="4" fill="#c084fc" filter="url(#glow-magenta)" />
         </g>
 
         {/* -------------------------------------------------------------- */}
-        {/* PERIMETER HIGHWAY / ROADS AROUND 5x5 GRID */}
+        {/* PERIMETER ASPHALT HIGHWAY RING WITH CARS AROUND 10x10 GRID */}
         {/* -------------------------------------------------------------- */}
-        <g id="road-network">
-          {/* Outer Road Ring (Dark Asphalt) */}
+        <g id="perimeter-highway">
+          {/* Ground Mesh Platform underneath 10x10 Grid */}
           <polygon
-            points="500 100 780 240 780 270 500 410 220 270 220 240"
+            points="550 80 950 280 550 480 150 280"
+            fill="#064e3b"
+            stroke="#10b981"
+            strokeWidth="4"
+            opacity="0.3"
+          />
+
+          {/* Outer Road Highway Ring */}
+          <polygon
+            points="550 70 960 275 960 305 550 510 140 305 140 275"
             fill="none"
             stroke="#0f172a"
-            strokeWidth="32"
+            strokeWidth="38"
           />
           <polygon
-            points="500 100 780 240 780 270 500 410 220 270 220 240"
+            points="550 70 960 275 960 305 550 510 140 305 140 275"
             fill="none"
             stroke="#1e293b"
-            strokeWidth="28"
+            strokeWidth="32"
           />
           {/* Dashed Center Road Markings */}
           <polygon
-            points="500 100 780 240 780 270 500 410 220 270 220 240"
+            points="550 70 960 275 960 305 550 510 140 305 140 275"
             fill="none"
-            stroke="#e2e8f0"
-            strokeWidth="1.5"
-            strokeDasharray="6 8"
-            opacity="0.6"
+            stroke="#facc15"
+            strokeWidth="1.8"
+            strokeDasharray="8 10"
+            opacity="0.75"
           />
 
-          {/* Animated 3D Cyber Vehicles on Roads */}
+          {/* Animated 3D Cyber Vehicles on Road Ring */}
           {/* Cyber Hovercar 1 (Yellow) */}
-          <g transform="translate(360, 170)">
-            <ellipse cx="0" cy="0" rx="7" ry="3.5" fill="#facc15" filter="url(#glow-gold)" />
-            <polygon points="-4 0 0 -3 5 0 0 3" fill="#fef08a" />
+          <g transform="translate(360, 160)">
+            <ellipse cx="0" cy="0" rx="8" ry="4" fill="#facc15" filter="url(#glow-gold)" />
+            <polygon points="-5 0 0 -3.5 6 0 0 3.5" fill="#fef08a" />
           </g>
 
           {/* Cyber Hovercar 2 (Cyan) */}
-          <g transform="translate(640, 340)">
-            <ellipse cx="0" cy="0" rx="7" ry="3.5" fill="#38bdf8" filter="url(#glow-cyan)" />
-            <polygon points="-4 0 0 -3 5 0 0 3" fill="#bae6fd" />
+          <g transform="translate(740, 400)">
+            <ellipse cx="0" cy="0" rx="8" ry="4" fill="#38bdf8" filter="url(#glow-cyan)" />
+            <polygon points="-5 0 0 -3.5 6 0 0 3.5" fill="#bae6fd" />
           </g>
 
-          {/* Futuristic Metro Transit Bus (Pink/White) */}
-          <g transform="translate(560, 380)">
-            <polygon points="-12 -3 4 5 12 1 -4 -7" fill="#f43f5e" />
-            <polygon points="-12 -7 4 1 12 -3 -4 -11" fill="#fff" />
+          {/* Futuristic Metro Bus (Pink & White) */}
+          <g transform="translate(680, 430)">
+            <polygon points="-14 -3 5 6 15 1 -5 -8" fill="#ec4899" filter="url(#glow-magenta)" />
+            <polygon points="-14 -7 5 2 15 -3 -5 -12" fill="#ffffff" />
           </g>
         </g>
 
         {/* -------------------------------------------------------------- */}
-        {/* 3. 5x5 ISOMETRIC TILES & 3D BUILDINGS (DEPTH SORTED) */}
+        {/* 3. 10x10 ISOMETRIC GRID (100 TILES, DEPTH SORTED) */}
         {/* -------------------------------------------------------------- */}
-        <g id="city-tiles">
+        <g id="city-10x10-tiles">
           {tiles.map(({ gx, gy }) => {
             const { x, y } = getScreenCoords(gx, gy);
             const key = `${gx},${gy}`;
@@ -238,6 +327,8 @@ export function IsometricBoard({
               building.type === "RESIDENTIAL_TOWER" ||
               building.type === "COMMERCIAL_OFFICE";
 
+            const tierLabel = `${building.level}-bosqich (Lv.${building.level})`;
+
             return (
               <g
                 key={key}
@@ -246,79 +337,81 @@ export function IsometricBoard({
                 onMouseLeave={() => setSelectedHoverId(null)}
                 className="transition-transform duration-200"
               >
-                {/* 3D Model */}
-                {isGreen && <YashilTurarJoylar3D x={x} y={y} />}
-                {isTijorat && <TijoratSanoat3D x={x} y={y} />}
-                {isLab && <IlmFanLab3D x={x} y={y} />}
-                {isArcade && <KongilocharMarkaz3D x={x} y={y} />}
-                {isTower && <ModernTower3D x={x} y={y} />}
+                {/* Volumetric 3D Model Asset */}
+                {isGreen && <YashilTurarJoylar3D x={x} y={y} level={building.level} />}
+                {isTijorat && <TijoratSanoat3D x={x} y={y} level={building.level} />}
+                {isLab && <IlmFanLab3D x={x} y={y} level={building.level} />}
+                {isArcade && <KongilocharMarkaz3D x={x} y={y} level={building.level} />}
+                {isTower && <ModernTower3D x={x} y={y} level={building.level} />}
                 {!isGreen && !isTijorat && !isLab && !isArcade && !isTower && (
-                  <ModernTower3D x={x} y={y} />
+                  <ModernTower3D x={x} y={y} level={building.level} />
                 )}
 
-                {/* Floating 3D Building Title & Level Badge */}
+                {/* Floating 3D Building Title & Actual Upgrade Tier Badge */}
                 <g
-                  transform={`translate(${x}, ${y - 68})`}
+                  transform={`translate(${x}, ${y - 56})`}
                   className="pointer-events-none transition-transform duration-200 group-hover:scale-105"
                 >
-                  {/* Glass Badge Background */}
+                  {/* Glassmorphic Badge Background */}
                   <rect
-                    x="-48"
+                    x="-54"
                     y="-11"
-                    width="96"
+                    width="108"
                     height="20"
                     rx="10"
                     fill="#020617"
-                    fillOpacity="0.92"
+                    fillOpacity="0.94"
                     stroke="#38bdf8"
                     strokeWidth="1.2"
-                    strokeOpacity="0.7"
+                    strokeOpacity="0.8"
                     filter="url(#glow-cyan)"
                   />
                   {/* Building Name */}
                   <text
-                    x="-6"
+                    x="-10"
                     y="3"
                     fill="#ffffff"
                     fontSize="8.5"
-                    fontWeight="bold"
+                    fontWeight="900"
                     textAnchor="middle"
                   >
                     {info.name}
                   </text>
-                  {/* Level Pill */}
+                  {/* Tier Badge showing actual upgrade level (e.g. 3-bosqich, Lv.3) */}
                   <rect
-                    x="24"
+                    x="22"
                     y="-7"
-                    width="18"
-                    height="12"
-                    rx="6"
+                    width="26"
+                    height="13"
+                    rx="6.5"
                     fill="#0284c7"
-                    fillOpacity="0.5"
+                    fillOpacity="0.75"
+                    stroke="#38bdf8"
+                    strokeWidth="0.8"
                   />
                   <text
-                    x="33"
-                    y="2"
-                    fill="#38bdf8"
+                    x="35"
+                    y="2.5"
+                    fill="#f0f9ff"
                     fontSize="7"
-                    fontWeight="bold"
+                    fontWeight="900"
                     fontFamily="monospace"
                     textAnchor="middle"
                   >
-                    L{building.level}
+                    Lv.{building.level}
                   </text>
 
                   {/* Sub Badge for Green Residential (👥 401 👤 99) */}
                   {isGreen && (
-                    <g transform="translate(0, 17)">
+                    <g transform="translate(0, 16)">
                       <rect
-                        x="-30"
+                        x="-32"
                         y="-7"
-                        width="60"
+                        width="64"
                         height="14"
                         rx="7"
                         fill="#064e3b"
-                        fillOpacity="0.9"
+                        fillOpacity="0.92"
                         stroke="#10b981"
                         strokeWidth="1"
                       />
