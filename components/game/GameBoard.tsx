@@ -112,6 +112,7 @@ export function GameBoard({ username, initialData }: GameBoardProps) {
         {/* Center Column: 3D Isometric Metropolis Board */}
         <IsometricBoard
           buildings={buildings}
+          efficiency={economy.efficiency}
           onSelectEmptyTile={(x, y) => setSelectedEmptyTile({ x, y })}
           onSelectBuilding={(building) => setSelectedBuilding(building)}
         />
