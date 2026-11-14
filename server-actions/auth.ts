@@ -118,9 +118,10 @@ export async function registerAction(
     return { success: true };
   } catch (error) {
     console.error("Registration error:", error);
+    const msg = error instanceof Error ? error.message : "Database connection failed";
     return {
       success: false,
-      error: "An unexpected error occurred during city charter registration.",
+      error: msg,
     };
   }
 }
@@ -169,9 +170,10 @@ export async function loginAction(
     return { success: true };
   } catch (error) {
     console.error("Login error:", error);
+    const msg = error instanceof Error ? error.message : "Database connection failed";
     return {
       success: false,
-      error: "An error occurred while logging in. Please try again.",
+      error: msg,
     };
   }
 }
