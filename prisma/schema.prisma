@@ -1,4 +1,5 @@
-// Prisma schema configured for Supabase PostgreSQL deployment
+// Prisma schema for Idle City Builder game
+// Database: PostgreSQL (Supabase Production)
 
 generator client {
   provider = "prisma-client-js"
@@ -62,7 +63,7 @@ model BridgeConnection {
   user_b_id  String
   user_a     User     @relation("SentBridges", fields: [user_a_id], references: [id], onDelete: Cascade)
   user_b     User     @relation("ReceivedBridges", fields: [user_b_id], references: [id], onDelete: Cascade)
-  status     String   @default("PENDING") // PENDING, ACCEPTED, REJECTED
+  status     String   @default("PENDING")
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
 
