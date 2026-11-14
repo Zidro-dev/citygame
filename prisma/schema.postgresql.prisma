@@ -1,0 +1,72 @@
+// Prisma schema configured for Supabase PostgreSQL deployment
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model User {
+  id            String   @id @default(cuid())
+  username      String   @unique
+  password_hash String
+  created_at    DateTime @default(now())
+  updated_at    DateTime @updatedAt
+
+  city City?
+
+  sentBridges     BridgeConnection[] @relation("SentBridges")
+  receivedBridges BridgeConnection[] @relation("ReceivedBridges")
+
+  @@index([username])
+}
+
+model City {
+  id             String   @id @default(cuid())
+  user_id        String   @unique
+  user           User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  balance        Float    @default(500.0)
+  population     Int      @default(0)
+  last_sync_time DateTime @default(now())
+  created_at     DateTime @default(now())
+  updated_at     DateTime @updatedAt
+
+  buildings Building[]
+
+  @@index([population])
+  @@index([last_sync_time])
+}
+
+model Building {
+  id         String   @id @default(cuid())
+  city_id    String
+  city       City     @relation(fields: [city_id], references: [id], onDelete: Cascade)
+  type       String
+  level      Int      @default(1)
+  grid_x     Int
+  grid_y     Int
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  @@unique([city_id, grid_x, grid_y])
+  @@index([city_id])
+}
+
+model BridgeConnection {
+  id         String   @id @default(cuid())
+  user_a_id  String
+  user_b_id  String
+  user_a     User     @relation("SentBridges", fields: [user_a_id], references: [id], onDelete: Cascade)
+  user_b     User     @relation("ReceivedBridges", fields: [user_b_id], references: [id], onDelete: Cascade)
+  status     String   @default("PENDING") // PENDING, ACCEPTED, REJECTED
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  @@unique([user_a_id, user_b_id])
+  @@index([user_a_id, status])
+  @@index([user_b_id, status])
+}
