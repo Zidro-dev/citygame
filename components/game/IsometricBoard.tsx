@@ -389,6 +389,91 @@ export function IsometricBoard({
 }: IsometricBoardProps) {
   const [selectedHoverId, setSelectedHoverId] = useState<string | null>(null);
 
+  // Pan and Zoom interactive state
+  const [zoom, setZoom] = useState(1);
+  const [pan, setPan] = useState({ x: 0, y: 0 });
+  const [isDragging, setIsDragging] = useState(false);
+
+  const dragStartRef = React.useRef<{ x: number; y: number } | null>(null);
+  const initialPinchDistRef = React.useRef<number | null>(null);
+  const initialPinchZoomRef = React.useRef<number>(1);
+  const hasMovedRef = React.useRef(false);
+
+  const handleMouseDown = (e: React.MouseEvent) => {
+    if (e.button !== 0) return;
+    dragStartRef.current = { x: e.clientX - pan.x, y: e.clientY - pan.y };
+    hasMovedRef.current = false;
+  };
+
+  const handleMouseMove = (e: React.MouseEvent) => {
+    if (!dragStartRef.current) return;
+    const newX = e.clientX - dragStartRef.current.x;
+    const newY = e.clientY - dragStartRef.current.y;
+    if (Math.hypot(newX - pan.x, newY - pan.y) > 4) {
+      hasMovedRef.current = true;
+      setIsDragging(true);
+    }
+    setPan({ x: newX, y: newY });
+  };
+
+  const handleMouseUp = () => {
+    dragStartRef.current = null;
+    setIsDragging(false);
+  };
+
+  const handleWheel = (e: React.WheelEvent) => {
+    const delta = e.deltaY < 0 ? 0.12 : -0.12;
+    setZoom((prev) => Math.min(2.4, Math.max(0.6, +(prev + delta).toFixed(2))));
+  };
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    if (e.touches.length === 1) {
+      dragStartRef.current = {
+        x: e.touches[0].clientX - pan.x,
+        y: e.touches[0].clientY - pan.y,
+      };
+      hasMovedRef.current = false;
+    } else if (e.touches.length === 2) {
+      const dist = Math.hypot(
+        e.touches[0].clientX - e.touches[1].clientX,
+        e.touches[0].clientY - e.touches[1].clientY
+      );
+      initialPinchDistRef.current = dist;
+      initialPinchZoomRef.current = zoom;
+      hasMovedRef.current = true;
+    }
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (e.touches.length === 1 && dragStartRef.current) {
+      const newX = e.touches[0].clientX - dragStartRef.current.x;
+      const newY = e.touches[0].clientY - dragStartRef.current.y;
+      if (Math.hypot(newX - pan.x, newY - pan.y) > 4) {
+        hasMovedRef.current = true;
+        setIsDragging(true);
+      }
+      setPan({ x: newX, y: newY });
+    } else if (e.touches.length === 2 && initialPinchDistRef.current) {
+      const dist = Math.hypot(
+        e.touches[0].clientX - e.touches[1].clientX,
+        e.touches[0].clientY - e.touches[1].clientY
+      );
+      const factor = dist / initialPinchDistRef.current;
+      setZoom(Math.min(2.4, Math.max(0.6, +(initialPinchZoomRef.current * factor).toFixed(2))));
+    }
+  };
+
+  const handleTouchEnd = () => {
+    dragStartRef.current = null;
+    initialPinchDistRef.current = null;
+    setIsDragging(false);
+  };
+
+  const handleResetView = () => {
+    setZoom(1);
+    setPan({ x: 0, y: 0 });
+  };
+
   // Map buildings by coordinates "x,y" for O(1) lookup
   const buildingMap = new Map<string, BuildingState>();
   for (const b of buildings) {
@@ -424,7 +509,17 @@ export function IsometricBoard({
     : null;
 
   return (
-    <div className="relative w-full flex-1 flex flex-col items-center justify-center min-h-[620px] p-1 overflow-hidden select-none">
+    <div
+      className="relative w-full flex-1 flex flex-col items-center justify-center min-h-[520px] h-[72vh] md:h-[80vh] p-1 overflow-hidden select-none touch-none cursor-grab active:cursor-grabbing"
+      onMouseDown={handleMouseDown}
+      onMouseMove={handleMouseMove}
+      onMouseUp={handleMouseUp}
+      onMouseLeave={handleMouseUp}
+      onWheel={handleWheel}
+      onTouchStart={handleTouchStart}
+      onTouchMove={handleTouchMove}
+      onTouchEnd={handleTouchEnd}
+    >
       {/* ------------------------------------------------------------------ */}
       {/* 1. FLOATING SCI-FI ALLIANCE BADGES & STATS */}
       {/* ------------------------------------------------------------------ */}
@@ -476,8 +571,16 @@ export function IsometricBoard({
       >
         <IsometricDefs />
 
-        {/* Ambient Ground Glow */}
-        <ellipse cx="550" cy="360" rx="460" ry="220" fill="url(#glass-front)" opacity="0.08" />
+        {/* Dynamic Zoom & Pan Transform Container */}
+        <g
+          transform={`translate(${pan.x}, ${pan.y}) scale(${zoom})`}
+          style={{
+            transformOrigin: "550px 340px",
+            transition: isDragging ? "none" : "transform 0.1s ease-out",
+          }}
+        >
+          {/* Ambient Ground Glow */}
+          <ellipse cx="550" cy="360" rx="460" ry="220" fill="url(#glass-front)" opacity="0.08" />
 
         {/* -------------------------------------------------------------- */}
         {/* FOUR THICK ILLUMINATED GLOWING ENERGY-BRIDGE PATHWAYS */}
@@ -673,7 +776,10 @@ export function IsometricBoard({
                   y={y}
                   gridX={gx}
                   gridY={gy}
-                  onClick={() => onSelectEmptyTile(gx, gy)}
+                  onClick={() => {
+                    if (hasMovedRef.current) return;
+                    onSelectEmptyTile(gx, gy);
+                  }}
                 />
               );
             }
@@ -695,6 +801,7 @@ export function IsometricBoard({
               <g
                 key={key}
                 onClick={() => {
+                  if (hasMovedRef.current) return;
                   setSelectedHoverId(key);
                   onSelectBuilding(building);
                 }}
@@ -739,7 +846,52 @@ export function IsometricBoard({
             onMouseLeave={() => setSelectedHoverId(null)}
           />
         )}
+        </g>
       </svg>
+
+      {/* Floating Sci-Fi Zoom & Reset Controls */}
+      <div className="absolute bottom-3 right-3 sm:bottom-4 sm:right-4 z-30 flex items-center gap-1.5 bg-slate-950/90 border border-cyan-500/40 rounded-2xl p-1.5 backdrop-blur-xl shadow-2xl">
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            setZoom((z) => Math.min(2.4, +(z + 0.2).toFixed(1)));
+          }}
+          title="Zoom In"
+          className="w-7 h-7 sm:w-8 sm:h-8 rounded-xl bg-slate-900 hover:bg-cyan-500/20 text-cyan-300 font-bold flex items-center justify-center border border-cyan-500/30 active:scale-90 transition cursor-pointer text-sm"
+        >
+          +
+        </button>
+        <span className="text-[10px] font-mono font-bold text-cyan-200 px-1 min-w-[34px] text-center select-none">
+          {Math.round(zoom * 100)}%
+        </span>
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            setZoom((z) => Math.max(0.6, +(z - 0.2).toFixed(1)));
+          }}
+          title="Zoom Out"
+          className="w-7 h-7 sm:w-8 sm:h-8 rounded-xl bg-slate-900 hover:bg-cyan-500/20 text-cyan-300 font-bold flex items-center justify-center border border-cyan-500/30 active:scale-90 transition cursor-pointer text-sm"
+        >
+          -
+        </button>
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            handleResetView();
+          }}
+          title="Reset View"
+          className="w-7 h-7 sm:w-8 sm:h-8 rounded-xl bg-slate-900 hover:bg-purple-500/20 text-purple-300 font-bold flex items-center justify-center border border-purple-500/30 active:scale-90 transition cursor-pointer text-xs ml-0.5"
+        >
+          ⟲
+        </button>
+      </div>
+
+      {/* Mobile Gesture Hint */}
+      <div className="absolute top-2 left-1/2 -translate-x-1/2 z-20 pointer-events-none lg:hidden">
+        <div className="px-3 py-1 rounded-full bg-slate-950/85 border border-cyan-500/30 text-[10px] text-cyan-300/90 font-mono tracking-wide backdrop-blur-md shadow-lg flex items-center gap-1.5">
+          <span>🤏 Chimchilab masshtablang • Siljiting</span>
+        </div>
+      </div>
     </div>
   );
 }

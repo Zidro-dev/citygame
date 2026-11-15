@@ -16,6 +16,7 @@ import {
   LogOut,
   Sparkles,
   TrendingUp,
+  Menu,
 } from "lucide-react";
 
 interface TopResourceBarProps {
@@ -25,6 +26,7 @@ interface TopResourceBarProps {
   isActionPending: boolean;
   onSync: () => void;
   rank?: number;
+  onOpenMobileMenu?: () => void;
 }
 
 export function TopResourceBar({
@@ -34,6 +36,7 @@ export function TopResourceBar({
   isActionPending,
   onSync,
   rank = 12,
+  onOpenMobileMenu,
 }: TopResourceBarProps) {
   const { t, language } = useLanguage();
   const efficiencyPercent = Math.round(economy.efficiency * 100);
@@ -63,9 +66,9 @@ export function TopResourceBar({
       {/* ------------------------------------------------------------- */}
       {/* Main 5 High-Fidelity Glow-Effect Resource Indicators */}
       {/* ------------------------------------------------------------- */}
-      <div className="flex flex-wrap items-center justify-center gap-2.5 flex-1">
+      <div className="flex items-center gap-2 overflow-x-auto no-scrollbar max-w-full py-1 lg:flex-wrap lg:justify-center flex-1">
         {/* 1. Mablag' ($ / sek) - Rich Gold/Amber with green growth tag */}
-        <div className="px-4 py-2 rounded-2xl bg-slate-900/90 border border-amber-500/40 shadow-[0_0_20px_rgba(245,158,11,0.15),inset_0_0_10px_rgba(245,158,11,0.1)] flex items-center gap-2.5 backdrop-blur-md">
+        <div className="shrink-0 px-3 py-1.5 sm:px-4 sm:py-2 rounded-2xl bg-slate-900/90 border border-amber-500/40 shadow-[0_0_20px_rgba(245,158,11,0.15),inset_0_0_10px_rgba(245,158,11,0.1)] flex items-center gap-2.5 backdrop-blur-md">
           <div className="p-1.5 rounded-xl bg-amber-500/20 text-amber-300 border border-amber-500/30 shadow-[0_0_10px_rgba(245,158,11,0.3)]">
             <Coins className="w-4 h-4 text-amber-300" />
           </div>
@@ -92,7 +95,7 @@ export function TopResourceBar({
         </div>
 
         {/* 2. Aholi (Ishchi kuchi: %) - Vivid Blue with Mini Progress Bar */}
-        <div className="px-4 py-2 rounded-2xl bg-slate-900/90 border border-blue-500/40 shadow-[0_0_20px_rgba(59,130,246,0.15),inset_0_0_10px_rgba(59,130,246,0.1)] flex items-center gap-2.5 backdrop-blur-md">
+        <div className="shrink-0 px-3 py-1.5 sm:px-4 sm:py-2 rounded-2xl bg-slate-900/90 border border-blue-500/40 shadow-[0_0_20px_rgba(59,130,246,0.15),inset_0_0_10px_rgba(59,130,246,0.1)] flex items-center gap-2.5 backdrop-blur-md">
           <div className="p-1.5 rounded-xl bg-blue-500/20 text-blue-300 border border-blue-500/30 shadow-[0_0_10px_rgba(59,130,246,0.3)]">
             <Users className="w-4 h-4 text-blue-300" />
           </div>
@@ -122,7 +125,7 @@ export function TopResourceBar({
         </div>
 
         {/* 3. Ilm-fan (Science) - Glowing Purple/Magenta */}
-        <div className="px-4 py-2 rounded-2xl bg-slate-900/90 border border-purple-500/40 shadow-[0_0_20px_rgba(168,85,247,0.15),inset_0_0_10px_rgba(168,85,247,0.1)] flex items-center gap-2.5 backdrop-blur-md">
+        <div className="shrink-0 px-3 py-1.5 sm:px-4 sm:py-2 rounded-2xl bg-slate-900/90 border border-purple-500/40 shadow-[0_0_20px_rgba(168,85,247,0.15),inset_0_0_10px_rgba(168,85,247,0.1)] flex items-center gap-2.5 backdrop-blur-md">
           <div className="p-1.5 rounded-xl bg-purple-500/20 text-purple-300 border border-purple-500/30 shadow-[0_0_10px_rgba(168,85,247,0.3)]">
             <Dna className="w-4 h-4 text-purple-300" />
           </div>
@@ -145,7 +148,7 @@ export function TopResourceBar({
         </div>
 
         {/* 4. Ekologiya / Baxt (Ecology / Happiness) - Vibrant Leaf Green */}
-        <div className="px-4 py-2 rounded-2xl bg-slate-900/90 border border-emerald-500/40 shadow-[0_0_20px_rgba(16,185,129,0.15),inset_0_0_10px_rgba(16,185,129,0.1)] flex items-center gap-2.5 backdrop-blur-md">
+        <div className="shrink-0 px-3 py-1.5 sm:px-4 sm:py-2 rounded-2xl bg-slate-900/90 border border-emerald-500/40 shadow-[0_0_20px_rgba(16,185,129,0.15),inset_0_0_10px_rgba(16,185,129,0.1)] flex items-center gap-2.5 backdrop-blur-md">
           <div className="p-1.5 rounded-xl bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 shadow-[0_0_10px_rgba(16,185,129,0.3)]">
             <ShieldCheck className="w-4 h-4 text-emerald-300" />
           </div>
@@ -170,7 +173,7 @@ export function TopResourceBar({
         {/* 5. Reyting (Leaderboard Rank) - Fiery Amber / Red Star Badge */}
         <Link
           href="/leaderboard"
-          className="group px-4 py-2 rounded-2xl bg-slate-900/90 border border-orange-500/40 hover:border-orange-400 shadow-[0_0_20px_rgba(249,115,22,0.15),inset_0_0_10px_rgba(249,115,22,0.1)] flex items-center gap-2.5 backdrop-blur-md transition-all duration-300 cursor-pointer"
+          className="shrink-0 group px-3 py-1.5 sm:px-4 sm:py-2 rounded-2xl bg-slate-900/90 border border-orange-500/40 hover:border-orange-400 shadow-[0_0_20px_rgba(249,115,22,0.15),inset_0_0_10px_rgba(249,115,22,0.1)] flex items-center gap-2.5 backdrop-blur-md transition-all duration-300 cursor-pointer"
         >
           <div className="p-1.5 rounded-xl bg-gradient-to-tr from-orange-600 to-amber-500 text-white shadow-[0_0_12px_rgba(249,115,22,0.4)] group-hover:scale-105 transition">
             <Flame className="w-4 h-4 text-amber-200 fill-amber-300" />
@@ -208,7 +211,7 @@ export function TopResourceBar({
           />
         </button>
 
-        <form action={logoutAction}>
+        <form action={logoutAction} className="hidden sm:block">
           <button
             type="submit"
             title={t("logoutTooltip")}
@@ -217,6 +220,16 @@ export function TopResourceBar({
             <LogOut className="w-3.5 h-3.5" />
           </button>
         </form>
+
+        {onOpenMobileMenu && (
+          <button
+            onClick={onOpenMobileMenu}
+            className="lg:hidden p-2 rounded-xl bg-slate-900/80 hover:bg-cyan-500/20 hover:text-cyan-300 border border-cyan-500/30 text-slate-300 transition cursor-pointer active:scale-95 shadow-sm"
+            title="Menyu"
+          >
+            <Menu className="w-4 h-4 text-cyan-400" />
+          </button>
+        )}
       </div>
     </header>
   );
